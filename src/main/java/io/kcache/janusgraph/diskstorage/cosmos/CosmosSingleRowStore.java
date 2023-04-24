@@ -23,11 +23,14 @@ import com.azure.cosmos.models.CosmosContainerRequestOptions;
 import com.azure.cosmos.models.CosmosContainerResponse;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosPatchOperations;
+import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.models.ThroughputProperties;
+import com.azure.cosmos.util.CosmosPagedFlux;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
+import io.kcache.janusgraph.diskstorage.cosmos.iterator.CosmosKeyIterator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +48,7 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeySliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.StaticArrayEntryList;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -94,22 +98,10 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     log.debug("Entering getKeys table:{} query:{} txh:{}", getTableName(), encodeForLog(query),
         txh);
 
-    final ScanRequest scanRequest = super.createScanRequest();
-
-    final Scanner scanner;
-    if (client.isEnableParallelScan()) {
-      scanner = client.getDelegate().getParallelScanCompletionService(scanRequest);
-    } else {
-      scanner = new SequentialScanner(client.getDelegate(), scanRequest);
-    }
-    // Because SINGLE records cannot be split across scan results, we can use the same interpreter for both
-    // sequential and parallel scans.
-    final KeyIterator result = new ScanBackedKeyIterator(scanner,
-        new SingleRowScanInterpreter(query));
-
-    log.debug("Exiting getKeys table:{} query:{} txh:{} returning:{}", getTableName(),
-        encodeForLog(query), txh, result);
-    return result;
+    String sql = "SELECT * FROM c";
+    CosmosPagedFlux<ObjectNode> flux = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
+    Iterable<ObjectNode> iter = flux.byPage(100).flatMap(response -> Flux.fromIterable(response.getResults())).toIterable();
+    return new CosmosKeyIterator(iter.iterator());
   }
 
   @Override

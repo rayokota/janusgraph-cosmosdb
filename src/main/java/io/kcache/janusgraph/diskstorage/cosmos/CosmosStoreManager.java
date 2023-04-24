@@ -90,6 +90,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     try {
       client = new CosmosClientBuilder()
           .endpoint(backendConfig.get(Constants.COSMOS_CLIENT_ENDPOINT))
+          // TODO
           .key(backendConfig.get(Constants.COSMOS_CLIENT_ENDPOINT))
           //.preferredRegions(preferredRegions)
           .contentResponseOnWriteEnabled(true)
