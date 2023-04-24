@@ -3,9 +3,9 @@ package io.kcache.janusgraph.diskstorage.cosmos;
 import org.janusgraph.diskstorage.BaseTransactionConfig;
 import org.janusgraph.diskstorage.common.AbstractStoreTransaction;
 
-public class CosmosTx extends AbstractStoreTransaction {
+public class CosmosStoreTransaction extends AbstractStoreTransaction {
 
-    public CosmosTx(BaseTransactionConfig config) {
-        super(config);
-    }
+  public CosmosStoreTransaction(BaseTransactionConfig config) {
+    super(config);
+  }
 }

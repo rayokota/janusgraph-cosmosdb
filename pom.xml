@@ -13,9 +13,11 @@
     <properties>
         <maven.compiler.plugin.version>3.6.2</maven.compiler.plugin.version>
         <jdk.version>1.8</jdk.version>
+        <cosmos.version>4.43.0</cosmos.version>
         <jackson.version>2.11.1</jackson.version>
         <janusgraph.version>0.5.2</janusgraph.version>
         <kcache.version>3.3.2</kcache.version>
+        <lombok.version>1.18.26</lombok.version>
         <slf4j.version>1.7.30</slf4j.version>
         <dependency.plugin.version>2.10</dependency.plugin.version>
         <test.excluded.groups>MEMORY_TESTS,PERFORMANCE_TESTS,BRITTLE_TESTS,CELL_TTL_TESTS</test.excluded.groups>
@@ -41,6 +43,11 @@
             <artifactId>janusgraph-test</artifactId>
             <version>${janusgraph.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-cosmos</artifactId>
+            <version>${cosmos.version}</version>
         </dependency>
         <dependency>
             <groupId>io.kcache</groupId>
@@ -73,6 +80,11 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

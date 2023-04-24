@@ -14,7 +14,7 @@
 package io.kcache.janusgraph.blueprints;
 
 import io.kcache.janusgraph.CosmosStorageSetup;
-import io.kcache.janusgraph.diskstorage.cosmos.CosmosTx;
+import io.kcache.janusgraph.diskstorage.cosmos.CosmosStoreTransaction;
 import org.janusgraph.blueprints.AbstractJanusGraphComputerProvider;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
@@ -39,7 +39,7 @@ public class CosmosGraphComputerProvider extends AbstractJanusGraphComputerProvi
     @Override
     public Set<Class> getImplementations() {
         final Set<Class> implementations = super.getImplementations();
-        implementations.add(CosmosTx.class);
+        implementations.add(CosmosStoreTransaction.class);
         return implementations;
     }
 
