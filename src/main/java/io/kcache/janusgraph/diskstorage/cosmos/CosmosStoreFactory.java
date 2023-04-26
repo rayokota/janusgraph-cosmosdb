@@ -31,7 +31,7 @@ public interface CosmosStoreFactory {
    *               factory.
    * @param name   the name of the KCVStore, without the prefix.
    * @return a KCVStore with the given name and table prefix
-   * @throws BackendException
+   * @throws BackendException if unable to create the store
    */
   CosmosSingleRowStore create(CosmosStoreManager manager, String prefix, String name)
       throws BackendException;

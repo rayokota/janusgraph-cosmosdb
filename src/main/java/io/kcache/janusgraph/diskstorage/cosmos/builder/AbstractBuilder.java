@@ -14,6 +14,7 @@
  */
 package io.kcache.janusgraph.diskstorage.cosmos.builder;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import org.apache.commons.codec.DecoderException;
@@ -48,6 +49,13 @@ public abstract class AbstractBuilder {
     } catch (DecoderException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public StaticBuffer decodeKey(final ObjectNode key, final String name) {
+    if (null == key || !key.has(name)) {
+      return null;
+    }
+    return decodeKey(key.get(name).textValue());
   }
 
   public static String encodeValue(final StaticBuffer input) {

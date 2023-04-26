@@ -43,7 +43,7 @@ public interface CosmosKeyColumnValueStore extends KeyColumnValueStore {
   /**
    * Deletes the KCV store and underlying DynamoDB tables.
    *
-   * @throws BackendException
+   * @throws BackendException if unable to delete the underlying store
    */
   void deleteStore() throws BackendException;
 

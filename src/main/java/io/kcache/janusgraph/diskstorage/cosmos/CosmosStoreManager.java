@@ -21,12 +21,9 @@ import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.cosmos.models.CosmosDatabaseRequestOptions;
 import com.azure.cosmos.models.CosmosDatabaseResponse;
 import com.azure.cosmos.models.CosmosItemResponse;
-import com.azure.cosmos.models.CosmosPatchOperations;
-import com.azure.cosmos.models.PartitionKey;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -36,7 +33,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.BaseTransactionConfig;
-import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.PermanentBackendException;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.StoreMetaData.Container;
@@ -97,7 +93,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
           .consistencyLevel(ConsistencyLevel.SESSION)
           .buildAsyncClient();
     } catch (IllegalArgumentException e) {
-      throw new PermanentBackendException("Bad configuration used: " + backendConfig.toString(), e);
+      throw new PermanentBackendException("Bad configuration used: " + backendConfig, e);
     }
     databaseName = backendConfig.get(Constants.COSMOS_DATABASE);
     prefix = backendConfig.get(Constants.COSMOS_TABLE_PREFIX);

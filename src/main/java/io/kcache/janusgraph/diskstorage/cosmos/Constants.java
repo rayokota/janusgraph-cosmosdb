@@ -38,7 +38,9 @@ public final class Constants {
   private Constants() {
   }
 
-  public static final String JANUSGRAPH_PARTITION_KEY = "id";
+  public static final String JANUSGRAPH_PARTITION_KEY = "pk";
+  public static final String JANUSGRAPH_COLUMN_KEY = "ck";
+  public static final String JANUSGRAPH_VALUE = "v";
   public static final String HEX_PREFIX = "0x";
 
   public static final List<String> REQUIRED_BACKEND_STORES = ImmutableList.of(

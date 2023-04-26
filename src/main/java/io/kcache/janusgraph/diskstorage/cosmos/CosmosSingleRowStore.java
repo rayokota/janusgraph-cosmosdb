@@ -16,21 +16,16 @@ package io.kcache.janusgraph.diskstorage.cosmos;
 
 import static io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.*;
 
-import com.azure.cosmos.CosmosAsyncContainer;
-import com.azure.cosmos.CosmosAsyncDatabase;
-import com.azure.cosmos.models.CosmosContainerProperties;
-import com.azure.cosmos.models.CosmosContainerRequestOptions;
-import com.azure.cosmos.models.CosmosContainerResponse;
+import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosPatchOperations;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
-import com.azure.cosmos.models.ThroughputProperties;
 import com.azure.cosmos.util.CosmosPagedFlux;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.Lists;
 import io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
-import io.kcache.janusgraph.diskstorage.cosmos.iterator.CosmosKeyIterator;
+import io.kcache.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
+import io.kcache.janusgraph.diskstorage.cosmos.iterator.FluxBasedKeyIterator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -78,9 +73,8 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     throw new UnsupportedOperationException("Keys are not byte ordered.");
   }
 
-  private EntryList extractEntriesFromGetItemResult(final GetItemResult result,
+  private EntryList extractEntriesFromGetItemResult(final ObjectNode item,
       final StaticBuffer sliceStart, final StaticBuffer sliceEnd, final int limit) {
-    final Map<String, AttributeValue> item = result.getItem();
     List<Entry> filteredEntries = Collections.emptyList();
     if (null != item) {
       item.remove(Constants.JANUSGRAPH_PARTITION_KEY);
@@ -99,9 +93,10 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         txh);
 
     String sql = "SELECT * FROM c";
-    CosmosPagedFlux<ObjectNode> flux = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
-    Iterable<ObjectNode> iter = flux.byPage(100).flatMap(response -> Flux.fromIterable(response.getResults())).toIterable();
-    return new CosmosKeyIterator(iter.iterator());
+    CosmosPagedFlux<ObjectNode> pagedFlux = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
+    // TODO make page size configurable?
+    Flux<ObjectNode> flux = pagedFlux.byPage(100).flatMap(response -> Flux.fromIterable(response.getResults()));
+    return new FluxBasedKeyIterator(flux);
   }
 
   @Override
@@ -109,12 +104,11 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       throws BackendException {
     log.debug("Entering getSliceKeySliceQuery table:{} query:{} txh:{}", getTableName(),
         encodeForLog(query), txh);
-    final GetItemRequest request = super.createGetItemRequest()
-        .withKey(new ItemBuilder().hashKey(query.getKey()).build());
-    final GetItemResult result = new ExponentialBackoff.GetItem(request,
-        client.getDelegate()).runWithBackoff();
+    String itemId = AbstractBuilder.encodeKey(query.getKey());
+    CosmosItemResponse<ObjectNode> result = getContainer().readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(), ObjectNode.class).block();
 
-    final List<Entry> filteredEntries = extractEntriesFromGetItemResult(result,
+    final List<Entry> filteredEntries = extractEntriesFromGetItemResult(
+        result != null ? result.getItem() : null,
         query.getSliceStart(), query.getSliceEnd(), query.getLimit());
     log.debug("Exiting getSliceKeySliceQuery table:{} query:{} txh:{} returning:{}", getTableName(),
         encodeForLog(query), txh,

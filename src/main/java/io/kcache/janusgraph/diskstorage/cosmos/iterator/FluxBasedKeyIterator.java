@@ -18,11 +18,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyIterator;
 import org.janusgraph.diskstorage.util.RecordIterator;
+import reactor.core.publisher.Flux;
 
 /**
  * KeyIterator that is backed by a DynamoDB scan. This class is ignorant to the fact that
@@ -31,15 +31,17 @@ import org.janusgraph.diskstorage.util.RecordIterator;
  *
  * @author Michael Rodaitis
  */
-public class CosmosKeyIterator implements KeyIterator {
+public class FluxBasedKeyIterator implements KeyIterator {
 
-    private final Iterator<ObjectNode> iterator;
+    private final Flux<ObjectNode> flux;
+    private final FluxContextInterpreter interpreter;
 
     private SingleKeyRecordIterator current;
     private Iterator<SingleKeyRecordIterator> recordIterators = Collections.emptyIterator();
 
-    public CosmosKeyIterator(final Iterator<ObjectNode> iterator) {
-        this.iterator = iterator;
+    public FluxBasedKeyIterator(final Flux<ObjectNode> flux, final FluxContextInterpreter interpreter) {
+        this.flux = flux;
+        this.recordIterators = interpreter.buildRecordIterators(flux);
     }
 
     @Override
@@ -54,20 +56,7 @@ public class CosmosKeyIterator implements KeyIterator {
 
     @Override
     public boolean hasNext() {
-        if (recordIterators.hasNext()) {
-            return true;
-        }
-
-        while (iterator.hasNext() && !recordIterators.hasNext()) {
-            nextScanResult();
-        }
         return recordIterators.hasNext();
-    }
-
-    private void nextScanResult() {
-        final ObjectNode objectNode = iterator.next();
-        final Iterable<SingleKeyRecordIterator> newIterators = interpreter.buildRecordIterators(scanContext);
-        recordIterators = newIterators.iterator();
     }
 
     @Override
