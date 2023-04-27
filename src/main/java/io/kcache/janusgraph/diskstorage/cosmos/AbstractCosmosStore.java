@@ -23,6 +23,7 @@ import com.azure.cosmos.models.CosmosContainerResponse;
 import com.azure.cosmos.models.CosmosPatchOperations;
 import com.azure.cosmos.models.ThroughputProperties;
 import io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -63,8 +64,22 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     this.containerName = prefix + "_" + storeName;
   }
 
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public String getContainerName() {
+    return containerName;
+  }
+
   public CosmosAsyncContainer getContainer() {
     return container;
+  }
+
+  protected void mutateOneKey(final StaticBuffer key, final KCVMutation mutation, final StoreTransaction txh) throws BackendException {
+    manager.mutateMany(Collections.singletonMap(name, Collections.singletonMap(key, mutation)), txh);
   }
 
   @Override
@@ -165,7 +180,7 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
 
   @Override
   public String toString() {
-    return this.getClass().getName() + ":" + getTableName();
+    return this.getClass().getName() + ":" + getContainerName();
   }
 
   protected String encodeForLog(final SliceQuery query) {

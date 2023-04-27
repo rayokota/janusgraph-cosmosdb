@@ -46,8 +46,7 @@ public class EntryBuilder extends AbstractBuilder {
 
     public EntryBuilder(final ObjectNode item) {
         this.item = item;
-        // TODO
-        //item.remove(Constants.JANUSGRAPH_HASH_KEY);
+        item.remove(Constants.JANUSGRAPH_PARTITION_KEY);
     }
 
     public List<Entry> buildAll() {
@@ -56,7 +55,7 @@ public class EntryBuilder extends AbstractBuilder {
         }
         final Entry sliceStartEntry;
         final Entry sliceEndEntry;
-        if (slice) {
+        if (slice) {:
             sliceStartEntry = StaticArrayEntry.of(start, BufferUtil.emptyBuffer());
             sliceEndEntry = StaticArrayEntry.of(end, BufferUtil.emptyBuffer());
         } else {

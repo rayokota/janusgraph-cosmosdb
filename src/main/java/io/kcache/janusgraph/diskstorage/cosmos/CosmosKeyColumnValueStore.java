@@ -54,7 +54,7 @@ public interface CosmosKeyColumnValueStore extends KeyColumnValueStore {
    *
    * @return the table name corresponding to the KCVStore
    */
-  String getTableName();
+  String getContainerName();
 
   List<Mono<CosmosItemResponse<ObjectNode>>> mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)

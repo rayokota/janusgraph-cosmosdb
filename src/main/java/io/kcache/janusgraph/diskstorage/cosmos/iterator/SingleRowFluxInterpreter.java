@@ -38,7 +38,7 @@ import reactor.core.publisher.Flux;
  *
  * @author Michael Rodaitis
  */
-public class SingleRowFluxInterpreter implements FluxContextInterpreter {
+public class SingleRowFluxInterpreter implements FluxContextInterpreter<ObjectNode> {
 
     private final SliceQuery sliceQuery;
 
@@ -49,10 +49,10 @@ public class SingleRowFluxInterpreter implements FluxContextInterpreter {
     @Override
     public Iterable<SingleKeyRecordIterator> buildRecordIterators(final Flux<ObjectNode> flux) {
         return flux.flatMap(item -> {
-            final StaticBuffer hashKey = new KeyBuilder(item).build(Constants.JANUSGRAPH_PARTITION_KEY);
+            final StaticBuffer key = new KeyBuilder(item).build(Constants.JANUSGRAPH_PARTITION_KEY);
             final RecordIterator<Entry> recordIterator = createRecordIterator(item);
             if (recordIterator.hasNext()) {
-                return Flux.just(new SingleKeyRecordIterator(hashKey, recordIterator));
+                return Flux.just(new SingleKeyRecordIterator(key, recordIterator));
             } else {
                 return Flux.empty();
             }
@@ -61,21 +61,10 @@ public class SingleRowFluxInterpreter implements FluxContextInterpreter {
 
     private RecordIterator<Entry> createRecordIterator(final ObjectNode item) {
         item.remove(Constants.JANUSGRAPH_PARTITION_KEY);
-        final List<Entry> entries = decodeSlice(item);
-        final RecordIterator<Entry> iterator = new StaticRecordIterator(entries);
-        return iterator;
-    }
-
-    private List<Entry> decodeSlice(final ObjectNode item) {
-        final List<Entry> entries = new EntryBuilder(item).buildAll();
-        final Entry sliceStartEntry = StaticArrayEntry.of(sliceQuery.getSliceStart(), BufferUtil.emptyBuffer());
-        final Entry sliceEndEntry = StaticArrayEntry.of(sliceQuery.getSliceEnd(), BufferUtil.emptyBuffer());
-        final List<Entry> filteredEntries = new ArrayList<>(entries.size());
-        for (Entry entry : entries) {
-            if (entry.compareTo(sliceStartEntry) >= 0 && entry.compareTo(sliceEndEntry) < 0) {
-                filteredEntries.add(entry);
-            }
-        }
-        return filteredEntries.subList(0, Math.min(filteredEntries.size(), sliceQuery.getLimit()));
+        final List<Entry> entries = new EntryBuilder(item)
+            .slice(sliceQuery.getSliceStart(), sliceQuery.getSliceEnd())
+            .limit(sliceQuery.getLimit())
+            .buildAll();
+        return new StaticRecordIterator(entries);
     }
 }

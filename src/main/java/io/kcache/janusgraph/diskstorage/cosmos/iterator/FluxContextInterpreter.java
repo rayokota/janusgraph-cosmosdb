@@ -23,13 +23,13 @@ import reactor.core.publisher.Flux;
  * @author Michael Rodaitis
  *
  */
-public interface FluxContextInterpreter {
+public interface FluxContextInterpreter<T> {
 
     /**
      *
      * @param flux
      * @return
      */
-    Iterable<SingleKeyRecordIterator> buildRecordIterators(Flux<ObjectNode> flux);
+    Iterable<SingleKeyRecordIterator> buildRecordIterators(Flux<T> flux);
 
 }

@@ -31,17 +31,18 @@ import reactor.core.publisher.Flux;
  *
  * @author Michael Rodaitis
  */
-public class FluxBasedKeyIterator implements KeyIterator {
+public class FluxBackedKeyIterator<T> implements KeyIterator {
 
-    private final Flux<ObjectNode> flux;
-    private final FluxContextInterpreter interpreter;
+    private final Flux<T> flux;
+    private final FluxContextInterpreter<T> interpreter;
 
     private SingleKeyRecordIterator current;
     private Iterator<SingleKeyRecordIterator> recordIterators = Collections.emptyIterator();
 
-    public FluxBasedKeyIterator(final Flux<ObjectNode> flux, final FluxContextInterpreter interpreter) {
+    public FluxBackedKeyIterator(final Flux<T> flux, final FluxContextInterpreter<T> interpreter) {
         this.flux = flux;
-        this.recordIterators = interpreter.buildRecordIterators(flux);
+        this.interpreter = interpreter;
+        this.recordIterators = interpreter.buildRecordIterators(flux).iterator();
     }
 
     @Override
