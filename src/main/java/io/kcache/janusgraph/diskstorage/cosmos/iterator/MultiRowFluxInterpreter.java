@@ -14,6 +14,8 @@
  */
 package io.kcache.janusgraph.diskstorage.cosmos.iterator;
 
+import static io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.decodeKey;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import io.kcache.janusgraph.diskstorage.cosmos.Constants;
@@ -55,7 +57,7 @@ public class MultiRowFluxInterpreter implements FluxContextInterpreter<GroupedFl
     @Override
     public List<SingleKeyRecordIterator> buildRecordIterators(final Flux<GroupedFlux<String, ObjectNode>> flux) {
         return flux.flatMap(item -> {
-            final StaticBuffer key = AbstractBuilder.decodeKey(item.key());
+            final StaticBuffer key = decodeKey(item.key());
             final RecordIterator<Entry> recordIterator = createRecordIterator(item);
             if (recordIterator.hasNext()) {
                 return Flux.just(new SingleKeyRecordIterator(key, recordIterator));

@@ -14,6 +14,9 @@
  */
 package io.kcache.janusgraph.diskstorage.cosmos;
 
+import static io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
+import static io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
+
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.CosmosAsyncDatabase;
@@ -192,23 +195,5 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     return "keyslice[hk:" + encodeKeyForLog(query.getKey()) + " " + "rk:" + encodeKeyForLog(
         query.getSliceStart()) + " -> " + encodeKeyForLog(query.getSliceEnd()) + " limit:"
         + query.getLimit() + "]";
-  }
-
-  protected CosmosPatchOperations convertToPatch(KCVMutation mutation) {
-    CosmosPatchOperations patch = CosmosPatchOperations.create();
-
-    if (mutation.hasDeletions()) {
-      for (StaticBuffer b : mutation.getDeletions()) {
-        patch.remove(AbstractBuilder.encodeKey(b));
-      }
-    }
-
-    if (mutation.hasAdditions()) {
-      for (Entry e : mutation.getAdditions()) {
-        patch.add(AbstractBuilder.encodeKey(e.getColumn()),
-            AbstractBuilder.encodeValue(e.getValue()));
-      }
-    }
-    return patch;
   }
 }

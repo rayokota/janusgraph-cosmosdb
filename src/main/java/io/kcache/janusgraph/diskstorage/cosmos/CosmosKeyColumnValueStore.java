@@ -56,7 +56,7 @@ public interface CosmosKeyColumnValueStore extends KeyColumnValueStore {
    */
   String getContainerName();
 
-  List<Mono<CosmosItemResponse<ObjectNode>>> mutateMany(
+  List<Mono<Void>> mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException;
 }

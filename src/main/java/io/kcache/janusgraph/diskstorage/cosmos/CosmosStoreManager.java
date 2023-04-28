@@ -194,7 +194,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   @Override
   public void mutateMany(final Map<String, Map<StaticBuffer, KCVMutation>> mutations,
       final StoreTransaction txh) throws BackendException {
-    List<Mono<CosmosItemResponse<ObjectNode>>> monos = new ArrayList<>();
+    List<Mono<Void>> monos = new ArrayList<>();
     for (Map.Entry<String, Map<StaticBuffer, KCVMutation>> mutationMapEntry : mutations.entrySet()) {
       final CosmosSingleRowStore store = openDatabase(mutationMapEntry.getKey());
       monos.addAll(store.mutateMany(mutationMapEntry.getValue(), txh));

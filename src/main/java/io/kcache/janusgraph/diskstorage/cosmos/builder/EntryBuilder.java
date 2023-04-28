@@ -55,7 +55,7 @@ public class EntryBuilder extends AbstractBuilder {
         }
         final Entry sliceStartEntry;
         final Entry sliceEndEntry;
-        if (slice) {:
+        if (slice) {
             sliceStartEntry = StaticArrayEntry.of(start, BufferUtil.emptyBuffer());
             sliceEndEntry = StaticArrayEntry.of(end, BufferUtil.emptyBuffer());
         } else {

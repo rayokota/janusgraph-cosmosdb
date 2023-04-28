@@ -14,15 +14,26 @@
  */
 package io.kcache.janusgraph.diskstorage.cosmos;
 
+import static io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
+import static io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
+
+import com.azure.cosmos.models.CosmosItemRequestOptions;
+import com.azure.cosmos.models.CosmosItemResponse;
+import com.azure.cosmos.models.CosmosPatchOperations;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
+import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedFlux;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
+import io.kcache.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
 import io.kcache.janusgraph.diskstorage.cosmos.iterator.FluxBackedKeyIterator;
 import io.kcache.janusgraph.diskstorage.cosmos.iterator.MultiRowFluxInterpreter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +53,9 @@ import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.StaticArrayEntryList;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.GroupedFlux;
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 /**
  * Acts as if DynamoDB were a Column Oriented Database by using range query when
@@ -63,20 +77,10 @@ import reactor.core.publisher.GroupedFlux;
 @Slf4j
 public class CosmosStore extends AbstractCosmosStore {
 
+    private static ObjectMapper MAPPER = new ObjectMapper();
+
     public CosmosStore(final CosmosStoreManager manager, final String prefix, final String storeName) {
         super(manager, prefix, storeName);
-    }
-
-    private EntryList createEntryListFromItems(final List<Map<String, AttributeValue>> items, final SliceQuery sliceQuery) {
-        final List<Entry> entries = new ArrayList<>(items.size());
-        for (Map<String, AttributeValue> item : items) {
-            final Entry entry = new EntryBuilder(item).slice(sliceQuery.getSliceStart(), sliceQuery.getSliceEnd())
-                                                .build();
-            if (null != entry) {
-                entries.add(entry);
-            }
-        }
-        return StaticArrayEntryList.of(entries);
     }
 
     @Override
@@ -97,59 +101,60 @@ public class CosmosStore extends AbstractCosmosStore {
             .groupBy(item -> item.get(Constants.JANUSGRAPH_PARTITION_KEY).textValue());
 
         log.debug("Exiting getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
-        return new FluxBackedKeyIterator(flux, new MultiRowFluxInterpreter(this, query));
+        return new FluxBackedKeyIterator<>(flux, new MultiRowFluxInterpreter(this, query));
     }
 
     @Override
     public EntryList getSlice(final KeySliceQuery query, final StoreTransaction txh)
             throws BackendException {
-        log.debug("Entering getSliceKeySliceQuery table:{} query:{} txh:{}", getTableName(), encodeForLog(query), txh);
-        final EntryList result = getKeysRangeQuery(query.getKey(), query, txh);
-        log.debug("Exiting getSliceKeySliceQuery table:{} query:{} txh:{} returning:{}", getTableName(), encodeForLog(query), txh,
-                  result.size());
-        return result;
+        log.debug("Entering getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
+
+        SliceQuery sliceQuery = new SliceQuery(query.getSliceStart(), query.getSliceEnd());
+        if (query.hasLimit()) {
+            sliceQuery.setLimit(query.getLimit());
+        }
+        Flux<Entry> flux = query(query.getKey(), sliceQuery, txh);
+        log.debug("Exiting getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
+        // TODO make page size configurable?
+        return StaticArrayEntryList.of(flux.toIterable());
+    }
+
+    private Flux<Entry> query(final StaticBuffer key, SliceQuery query, final StoreTransaction txh) {
+        String itemId = encodeKey(key);
+        String sql = "SELECT * FROM c where c.pk = '" + itemId
+            + "' and c.rk >= '" + encodeKey(query.getSliceStart())
+            + "' and c.rk < '" + encodeKey(query.getSliceEnd());
+        CosmosPagedFlux<ObjectNode> pagedFlux = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
+        log.debug("Exiting getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(
+            query), txh);
+        // TODO make page size configurable?
+        return pagedFlux
+            .byPage(100)
+            .flatMap(response -> Flux.fromIterable(response.getResults()))
+            .map(item -> new EntryBuilder(item).slice(query.getSliceStart(), query.getSliceEnd()).build())
+            .take(query.getLimit());
     }
 
     @Override
     public Map<StaticBuffer, EntryList> getSlice(final List<StaticBuffer> keys, final SliceQuery query, final StoreTransaction txh) throws BackendException {
         log.debug("Entering getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}",
-                  getTableName(),
+                  getContainerName(),
                   encodeForLog(keys),
                   encodeForLog(query),
                   txh);
 
-        final Map<StaticBuffer, EntryList> resultMap = Maps.newHashMapWithExpectedSize(keys.size());
-
-        final List<QueryWorker> queryWorkers = Lists.newLinkedList();
-        for (StaticBuffer hashKey : keys) {
-            final QueryWorker queryWorker = buildQueryWorker(hashKey, query);
-            queryWorkers.add(queryWorker);
-
-            resultMap.put(hashKey, EntryList.EMPTY_LIST);
-        }
-
-        final List<QueryResultWrapper> results = client.getDelegate().parallelQuery(queryWorkers);
-        for (QueryResultWrapper resultWrapper : results) {
-            final StaticBuffer titanKey = resultWrapper.getTitanKey();
-
-            final QueryResult dynamoDBResult = resultWrapper.getDynamoDBResult();
-            final EntryList entryList = createEntryListFromItems(dynamoDBResult.getItems(), query);
-            resultMap.put(titanKey, entryList);
-        }
-
-        log.debug("Exiting getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{} returning:{}",
-                  getTableName(),
-                  encodeForLog(keys),
-                  encodeForLog(query),
-                  txh,
-                  resultMap.size());
-        return resultMap;
+        return Flux.fromIterable(keys)
+            .parallel()
+            .flatMap(key -> Mono.zip(Mono.just(key), query(key, query, txh).collectList()))
+            .sequential()
+            .collectMap(Tuple2::getT1, tuple -> StaticArrayEntryList.of(tuple.getT2()))
+            .block();
     }
 
     @Override
     public void mutate(final StaticBuffer key, final List<Entry> additions, final List<StaticBuffer> deletions, final StoreTransaction txh) throws BackendException {
         log.debug("Entering mutate table:{} keys:{} additions:{} deletions:{} txh:{}",
-                  getTableName(),
+                  getContainerName(),
                   encodeKeyForLog(key),
                   encodeForLog(additions),
                   encodeForLog(deletions),
@@ -158,7 +163,7 @@ public class CosmosStore extends AbstractCosmosStore {
         super.mutateOneKey(key, new KCVMutation(additions, deletions), txh);
 
         log.debug("Exiting mutate table:{} keys:{} additions:{} deletions:{} txh:{} returning:void",
-                  getTableName(),
+                  getContainerName(),
                   encodeKeyForLog(key),
                   encodeForLog(additions),
                   encodeForLog(deletions),
@@ -166,96 +171,43 @@ public class CosmosStore extends AbstractCosmosStore {
     }
 
     @Override
+    public List<Mono<Void>> mutateMany(
+        final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
+        throws BackendException {
+        List<Mono<Void>> monos = new ArrayList<>();
+        for (Map.Entry<StaticBuffer, KCVMutation> entry : mutations.entrySet()) {
+            List<Mono<Void>> responses = mutate(entry.getKey(), entry.getValue())
+                .stream()
+                .map(Mono::then)
+                .collect(
+                Collectors.toList());
+            monos.addAll(responses);
+        }
+        return monos;
+    }
+
+    protected List<Mono<CosmosItemResponse<Object>>> mutate(StaticBuffer partitionKey, KCVMutation mutation) {
+        List<Mono<CosmosItemResponse<Object>>> responses = new ArrayList<>();
+
+        if (mutation.hasDeletions()) {
+            for (StaticBuffer b : mutation.getDeletions()) {
+                responses.add(getContainer().deleteItem(encodeKey(b), new PartitionKey(encodeKey(partitionKey))));
+            }
+        }
+
+        if (mutation.hasAdditions()) {
+            for (Entry e : mutation.getAdditions()) {
+                ObjectNode item = MAPPER.createObjectNode();
+                item.put(Constants.JANUSGRAPH_COLUMN_KEY, encodeKey(e.getColumn()));
+                item.put(Constants.JANUSGRAPH_VALUE, encodeValue(e.getValue()));
+                responses.add(getContainer().upsertItem(item, new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions()));
+            }
+        }
+        return responses;
+    }
+
+    @Override
     public String toString() {
-        return "DynamoDBKeyColumnValueStore:" + getTableName();
+        return "DynamoDBKeyColumnValueStore:" + getContainerName();
     }
-
-    @Override
-    public Collection<MutateWorker> createMutationWorkers(final Map<StaticBuffer, KCVMutation> mutationMap, final DynamoDbStoreTransaction txh) {
-        final List<MutateWorker> workers = new LinkedList<>();
-
-        for (Map.Entry<StaticBuffer, KCVMutation> entry : mutationMap.entrySet()) {
-            final StaticBuffer hashKey = entry.getKey();
-            final KCVMutation mutation = entry.getValue();
-            // Filter out deletions that are also added - TODO why use a set?
-            final Set<StaticBuffer> add = mutation.getAdditions().stream()
-                .map(Entry::getColumn).collect(Collectors.toSet());
-
-            final List<StaticBuffer> mutableDeletions = mutation.getDeletions().stream()
-                .filter(del -> !add.contains(del))
-                .collect(Collectors.toList());
-
-            if (mutation.hasAdditions()) {
-                workers.addAll(createWorkersForAdditions(hashKey, mutation.getAdditions(), txh));
-            }
-            if (!mutableDeletions.isEmpty()) {
-                workers.addAll(createWorkersForDeletions(hashKey, mutableDeletions, txh));
-            }
-        }
-
-        return workers;
-    }
-
-    private Collection<MutateWorker> createWorkersForAdditions(final StaticBuffer hashKey, final List<Entry> additions, final DynamoDbStoreTransaction txh) {
-        return additions.stream().map(addition -> {
-                final StaticBuffer rangeKey = addition.getColumn();
-                final Map<String, AttributeValue> keys = new ItemBuilder().hashKey(hashKey)
-                    .rangeKey(rangeKey)
-                    .build();
-
-                final Expression updateExpression = new MultiUpdateExpressionBuilder(this, txh).hashKey(hashKey)
-                    .rangeKey(rangeKey)
-                    .value(addition.getValue())
-                    .build();
-
-                return super.createUpdateItemRequest()
-                    .withUpdateExpression(updateExpression.getUpdateExpression())
-                    .withConditionExpression(updateExpression.getConditionExpression())
-                    .withExpressionAttributeValues(updateExpression.getAttributeValues())
-                    .withKey(keys);
-            })
-            .map(request -> new UpdateItemWorker(request, client.getDelegate()))
-            .collect(Collectors.toList());
-    }
-
-    private Collection<MutateWorker> createWorkersForDeletions(final StaticBuffer hashKey, final List<StaticBuffer> deletions, final DynamoDbStoreTransaction txh) {
-        final List<MutateWorker> workers = new LinkedList<>();
-        for (StaticBuffer rangeKey : deletions) {
-            final Map<String, AttributeValue> keys = new ItemBuilder().hashKey(hashKey)
-                                                                      .rangeKey(rangeKey)
-                                                                      .build();
-
-            final Expression updateExpression = new MultiUpdateExpressionBuilder(this, txh).hashKey(hashKey)
-                                                                                  .rangeKey(rangeKey)
-                                                                                  .build();
-
-            final DeleteItemRequest request = super.createDeleteItemRequest().withKey(keys)
-                     .withConditionExpression(updateExpression.getConditionExpression())
-                     .withExpressionAttributeValues(updateExpression.getAttributeValues());
-
-
-            workers.add(new DeleteItemWorker(request, client.getDelegate()));
-        }
-        return workers;
-    }
-
-    @Override
-    public CreateTableRequest getTableSchema() {
-        return super.getTableSchema()
-            .withAttributeDefinitions(
-                new AttributeDefinition()
-                    .withAttributeName(Constants.JANUSGRAPH_HASH_KEY)
-                    .withAttributeType(ScalarAttributeType.S),
-                new AttributeDefinition()
-                    .withAttributeName(Constants.JANUSGRAPH_RANGE_KEY)
-                    .withAttributeType(ScalarAttributeType.S))
-            .withKeySchema(
-                new KeySchemaElement()
-                    .withAttributeName(Constants.JANUSGRAPH_HASH_KEY)
-                    .withKeyType(KeyType.HASH),
-                new KeySchemaElement()
-                    .withAttributeName(Constants.JANUSGRAPH_RANGE_KEY)
-                    .withKeyType(KeyType.RANGE));
-    }
-
 }

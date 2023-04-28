@@ -23,7 +23,6 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedFlux;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
 import io.kcache.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
 import io.kcache.janusgraph.diskstorage.cosmos.iterator.FluxBackedKeyIterator;
 import io.kcache.janusgraph.diskstorage.cosmos.iterator.SingleRowFluxInterpreter;
@@ -31,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
@@ -53,10 +51,12 @@ import reactor.util.function.Tuple2;
  * has their own column. Note that if you are likely to go over the DynamoDB 400kb per item limit
  * you should use DynamoDbStore.
  * <p>
- * See configuration storage.dynamodb.stores.***store_name***.data-model=SINGLE
+ * See configuration
+ * storage.dynamodb.stores.***store_name***.data-model=SINGLE
  * <p>
- * KCV Schema - actual table (Hash(S) only): hk   |  0x02  |  0x04    <-Attribute Names 0x01 |  0x03
- * |  0x05    <-Row Values
+ * KCV Schema - actual table (Hash(S) only):
+ * hk   |  0x02  |  0x04    <-Attribute Names
+ * 0x01 |  0x03  |  0x05    <-Row Values
  *
  * @author Matthew Sowders
  * @author Alexander Patrikalakis
@@ -108,7 +108,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       throws BackendException {
     log.debug("Entering getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(),
         encodeForLog(query), txh);
-    String itemId = AbstractBuilder.encodeKey(query.getKey());
+    String itemId = encodeKey(query.getKey());
     CosmosItemResponse<ObjectNode> response = getContainer()
         .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(), ObjectNode.class)
         .block();
@@ -129,20 +129,22 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         encodeForLog(keys), encodeForLog(query),
         txh);
     return Flux.fromIterable(keys)
+        .parallel()
         .flatMap(key -> {
-          String itemId = AbstractBuilder.encodeKey(key);
+          String itemId = encodeKey(key);
           Mono<CosmosItemResponse<ObjectNode>> mono = getContainer()
               .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
                   ObjectNode.class);
-          return Flux.from(Mono.zip(Mono.just(key), mono));
-        }).parallel()
+          return Mono.zip(Mono.just(key), mono);
+        })
         .map(tuple -> tuple.mapT2(response -> {
               List<Entry> filteredEntries = extractEntriesFromGetItemResult(
                   response.getItem(),
                   query.getSliceStart(), query.getSliceEnd(), query.getLimit());
               return StaticArrayEntryList.of(filteredEntries);
             })
-        ).sequential()
+        )
+        .sequential()
         .collectMap(Tuple2::getT1, Tuple2::getT2)
         .block();
   }
@@ -166,19 +168,35 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         txh);
   }
 
-
   @Override
-  public List<Mono<CosmosItemResponse<ObjectNode>>> mutateMany(
+  public List<Mono<Void>> mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
-    List<Mono<CosmosItemResponse<ObjectNode>>> monos = new ArrayList<>();
+    List<Mono<Void>> monos = new ArrayList<>();
     for (Map.Entry<StaticBuffer, KCVMutation> entry : mutations.entrySet()) {
       String key = encodeKey(entry.getKey());
       CosmosPatchOperations ops = convertToPatch(entry.getValue());
       Mono<CosmosItemResponse<ObjectNode>> mono =
           getContainer().patchItem(key, new PartitionKey(key), ops, ObjectNode.class);
-      monos.add(mono);
+      monos.add(mono.then());
     }
     return monos;
+  }
+
+  protected CosmosPatchOperations convertToPatch(KCVMutation mutation) {
+    CosmosPatchOperations patch = CosmosPatchOperations.create();
+
+    if (mutation.hasDeletions()) {
+      for (StaticBuffer b : mutation.getDeletions()) {
+        patch.remove(encodeKey(b));
+      }
+    }
+
+    if (mutation.hasAdditions()) {
+      for (Entry e : mutation.getAdditions()) {
+        patch.add(encodeKey(e.getColumn()), encodeValue(e.getValue()));
+      }
+    }
+    return patch;
   }
 }
