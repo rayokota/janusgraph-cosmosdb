@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
@@ -171,19 +172,14 @@ public class CosmosStore extends AbstractCosmosStore {
     }
 
     @Override
-    public List<Mono<Void>> mutateMany(
+    public Stream<Mono<Void>> mutateMany(
         final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
         throws BackendException {
-        List<Mono<Void>> monos = new ArrayList<>();
-        for (Map.Entry<StaticBuffer, KCVMutation> entry : mutations.entrySet()) {
-            List<Mono<Void>> responses = mutate(entry.getKey(), entry.getValue())
+        return mutations.entrySet().stream()
+            .flatMap(entry -> mutate(entry.getKey(), entry.getValue())
                 .stream()
                 .map(Mono::then)
-                .collect(
-                Collectors.toList());
-            monos.addAll(responses);
-        }
-        return monos;
+            );
     }
 
     protected List<Mono<CosmosItemResponse<Object>>> mutate(StaticBuffer partitionKey, KCVMutation mutation) {

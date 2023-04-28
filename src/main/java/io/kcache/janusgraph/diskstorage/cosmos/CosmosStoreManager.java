@@ -29,6 +29,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
@@ -194,12 +195,17 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   @Override
   public void mutateMany(final Map<String, Map<StaticBuffer, KCVMutation>> mutations,
       final StoreTransaction txh) throws BackendException {
-    List<Mono<Void>> monos = new ArrayList<>();
-    for (Map.Entry<String, Map<StaticBuffer, KCVMutation>> mutationMapEntry : mutations.entrySet()) {
-      final CosmosSingleRowStore store = openDatabase(mutationMapEntry.getKey());
-      monos.addAll(store.mutateMany(mutationMapEntry.getValue(), txh));
-    }
-    Mono.when(monos).block();
+    Mono.when(mutations.entrySet().stream()
+        .flatMap(entry -> {
+          try {
+            final CosmosSingleRowStore store = openDatabase(entry.getKey());
+            return store.mutateMany(entry.getValue(), txh);
+          } catch (BackendException e) {
+            throw new RuntimeException(e);
+          }
+        })
+        .collect(Collectors.toList()))
+      .block();
   }
 
   @Override

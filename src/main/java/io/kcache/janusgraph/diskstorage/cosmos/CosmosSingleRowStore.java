@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
@@ -169,18 +171,17 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   }
 
   @Override
-  public List<Mono<Void>> mutateMany(
+  public Stream<Mono<Void>> mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
-    List<Mono<Void>> monos = new ArrayList<>();
-    for (Map.Entry<StaticBuffer, KCVMutation> entry : mutations.entrySet()) {
-      String key = encodeKey(entry.getKey());
-      CosmosPatchOperations ops = convertToPatch(entry.getValue());
-      Mono<CosmosItemResponse<ObjectNode>> mono =
-          getContainer().patchItem(key, new PartitionKey(key), ops, ObjectNode.class);
-      monos.add(mono.then());
-    }
-    return monos;
+    return mutations.entrySet().stream()
+        .map(entry -> {
+          String key = encodeKey(entry.getKey());
+          CosmosPatchOperations ops = convertToPatch(entry.getValue());
+          Mono<CosmosItemResponse<ObjectNode>> mono =
+              getContainer().patchItem(key, new PartitionKey(key), ops, ObjectNode.class);
+          return mono.then();
+        });
   }
 
   protected CosmosPatchOperations convertToPatch(KCVMutation mutation) {
