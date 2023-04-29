@@ -21,6 +21,6 @@ public class CosmosGraphConcurrentTest extends JanusGraphConcurrentTest {
 
     @Override
     public WriteConfiguration getConfiguration() {
-        return CosmosStorageSetup.getKafkaGraphConfiguration();
+        return CosmosStorageSetup.getCosmosGraphConfiguration();
     }
 }

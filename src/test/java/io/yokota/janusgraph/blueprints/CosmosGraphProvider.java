@@ -21,7 +21,7 @@ public class CosmosGraphProvider extends AbstractJanusGraphProvider {
 
     @Override
     public ModifiableConfiguration getJanusGraphConfiguration(String graphName, Class<?> test, String testMethodName) {
-        if (graphName != null) return CosmosStorageSetup.getKafkaConfiguration(graphName);
-        else return CosmosStorageSetup.getKafkaConfiguration();
+        if (graphName != null) return CosmosStorageSetup.getCosmosConfiguration(graphName);
+        else return CosmosStorageSetup.getCosmosConfiguration();
     }
 }

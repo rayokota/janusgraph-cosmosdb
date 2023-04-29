@@ -21,6 +21,6 @@ public class CosmosGraphPerformanceMemoryTest extends JanusGraphPerformanceMemor
 
     @Override
     public WriteConfiguration getConfiguration() {
-        return CosmosStorageSetup.getKafkaGraphConfiguration();
+        return CosmosStorageSetup.getCosmosGraphConfiguration();
     }
 }

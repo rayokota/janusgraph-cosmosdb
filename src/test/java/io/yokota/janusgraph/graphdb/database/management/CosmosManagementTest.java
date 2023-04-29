@@ -21,6 +21,6 @@ public class CosmosManagementTest extends ManagementTest {
 
     @Override
     public WriteConfiguration getConfiguration() {
-        return CosmosStorageSetup.getKafkaGraphConfiguration();
+        return CosmosStorageSetup.getCosmosGraphConfiguration();
     }
 }

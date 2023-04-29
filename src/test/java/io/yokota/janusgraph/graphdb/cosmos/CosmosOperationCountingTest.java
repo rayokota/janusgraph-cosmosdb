@@ -23,7 +23,7 @@ public class CosmosOperationCountingTest extends JanusGraphOperationCountingTest
 
     @Override
     public WriteConfiguration getBaseConfiguration() {
-        return CosmosStorageSetup.getKafkaGraphConfiguration();
+        return CosmosStorageSetup.getCosmosGraphConfiguration();
     }
 
     @AfterEach

@@ -36,7 +36,7 @@ public class CosmosGraphTest extends JanusGraphTest {
 
     @Override
     public WriteConfiguration getConfiguration() {
-        ModifiableConfiguration modifiableConfiguration = CosmosStorageSetup.getKafkaConfiguration();
+        ModifiableConfiguration modifiableConfiguration = CosmosStorageSetup.getCosmosConfiguration();
         return modifiableConfiguration.getConfiguration();
     }
 

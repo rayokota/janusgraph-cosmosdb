@@ -22,6 +22,6 @@ public class CosmosPartitionGraphTest extends JanusGraphPartitionGraphTest {
 
     @Override
     public WriteConfiguration getBaseConfiguration() {
-        return CosmosStorageSetup.getKafkaGraphConfiguration();
+        return CosmosStorageSetup.getCosmosGraphConfiguration();
     }
 }

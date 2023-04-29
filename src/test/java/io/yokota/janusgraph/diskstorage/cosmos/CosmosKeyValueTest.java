@@ -15,15 +15,15 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
 import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.KeyValueStoreTest;
-import org.janusgraph.diskstorage.keycolumnvalue.keyvalue.OrderedKeyValueStoreManager;
+import org.janusgraph.diskstorage.KeyColumnValueStoreTest;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.junit.jupiter.api.AfterEach;
 
-public class CosmosKeyValueTest extends KeyValueStoreTest {
+public class CosmosKeyValueTest extends KeyColumnValueStoreTest {
 
     @Override
-    public OrderedKeyValueStoreManager openStorageManager() throws BackendException {
-        return new CosmosStoreManager(CosmosStorageSetup.getKafkaConfiguration());
+    public KeyColumnValueStoreManager openStorageManager() throws BackendException {
+        return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
     }
 
     @AfterEach

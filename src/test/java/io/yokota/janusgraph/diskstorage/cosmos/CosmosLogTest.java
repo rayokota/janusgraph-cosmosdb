@@ -16,13 +16,11 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 import io.yokota.janusgraph.CosmosStorageSetup;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
-import org.janusgraph.diskstorage.keycolumnvalue.keyvalue.OrderedKeyValueStoreManagerAdapter;
 import org.janusgraph.diskstorage.log.KCVSLogTest;
 
 public class CosmosLogTest extends KCVSLogTest {
 
     public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-        CosmosStoreManager sm = new CosmosStoreManager(CosmosStorageSetup.getKafkaConfiguration());
-        return new OrderedKeyValueStoreManagerAdapter(sm);
+        return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
     }
 }

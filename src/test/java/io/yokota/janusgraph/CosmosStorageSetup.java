@@ -13,7 +13,6 @@
 
 package io.yokota.janusgraph;
 
-import io.kcache.janusgraph.diskstorage.cosmos.CosmosConfigOptions;
 import org.janusgraph.StorageSetup;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
@@ -23,19 +22,17 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
 public class CosmosStorageSetup extends StorageSetup {
 
 
-    public static ModifiableConfiguration getKafkaConfiguration() {
-        return getKafkaConfiguration("janusgraph-test-kafka");
+    public static ModifiableConfiguration getCosmosConfiguration() {
+        return getCosmosConfiguration("janusgraph-test-cosmos");
     }
 
-    public static ModifiableConfiguration getKafkaConfiguration(final String graphName) {
+    public static ModifiableConfiguration getCosmosConfiguration(final String graphName) {
         return buildGraphConfiguration()
-                .set(STORAGE_BACKEND,"io.kcache.janusgraph.diskstorage.cosmos.CosmosStoreManager")
-                .set(CosmosConfigOptions.BOOTSTRAP_SERVERS, "localhost:9092")
-                .set(CosmosConfigOptions.TOPIC_PREFIX, graphName)
+                .set(STORAGE_BACKEND,"io.yokota.janusgraph.diskstorage.cosmos.CosmosStoreManager")
                 .set(DROP_ON_CLEAR, false);
     }
 
-    public static WriteConfiguration getKafkaGraphConfiguration() {
-        return getKafkaConfiguration().getConfiguration();
+    public static WriteConfiguration getCosmosGraphConfiguration() {
+        return getCosmosConfiguration().getConfiguration();
     }
 }

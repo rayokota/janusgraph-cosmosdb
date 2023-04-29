@@ -21,6 +21,6 @@ public class CosmosOLAPTest extends OLAPTest {
 
     @Override
     public WriteConfiguration getConfiguration() {
-        return CosmosStorageSetup.getKafkaGraphConfiguration();
+        return CosmosStorageSetup.getCosmosGraphConfiguration();
     }
 }
