@@ -14,9 +14,6 @@
  */
 package io.kcache.janusgraph.diskstorage.cosmos.iterator;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.util.RecordIterator;
@@ -29,11 +26,21 @@ import org.janusgraph.diskstorage.util.RecordIterator;
  * @author Alexander Patrikalakis
  * @author Michael Rodaitis
  */
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public class SingleKeyRecordIterator {
 
-    @Getter
     private final StaticBuffer key;
-    @Getter(AccessLevel.PACKAGE)
     private final RecordIterator<Entry> recordIterator;
+
+    SingleKeyRecordIterator(StaticBuffer key, RecordIterator<Entry> recordIterator) {
+        this.key = key;
+        this.recordIterator = recordIterator;
+    }
+
+    public StaticBuffer getKey() {
+        return key;
+    }
+
+    RecordIterator<Entry> getRecordIterator() {
+        return recordIterator;
+    }
 }

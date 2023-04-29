@@ -98,7 +98,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     }
     databaseName = backendConfig.get(Constants.COSMOS_DATABASE);
     prefix = backendConfig.get(Constants.COSMOS_TABLE_PREFIX);
-    factory = new TableNameCosmosStoreFactory();
+    factory = new TableNameCosmosStoreFactory(backendConfig);
     features = initializeFeatures(backendConfig);
     createDatabaseIfNotExists();
   }
@@ -134,7 +134,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   @Override
   public void clearStorage() throws BackendException {
     log.debug("Entering clearStorage");
-    for (CosmosSingleRowStore store : factory.getAllStores()) {
+    for (CosmosKeyColumnValueStore store : factory.getAllStores()) {
       store.deleteStore();
     }
     client.getDatabase(databaseName).delete(new CosmosDatabaseRequestOptions()).block();
@@ -151,7 +151,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   @Override
   public void close() throws BackendException {
     log.debug("Entering close");
-    for (CosmosSingleRowStore store : factory.getAllStores()) {
+    for (CosmosKeyColumnValueStore store : factory.getAllStores()) {
       store.close();
     }
     client.close();
@@ -198,7 +198,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     Mono.when(mutations.entrySet().stream()
         .flatMap(entry -> {
           try {
-            final CosmosSingleRowStore store = openDatabase(entry.getKey());
+            final CosmosKeyColumnValueStore store = openDatabase(entry.getKey());
             return store.mutateMany(entry.getValue(), txh);
           } catch (BackendException e) {
             throw new RuntimeException(e);
@@ -209,14 +209,14 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   }
 
   @Override
-  public CosmosSingleRowStore openDatabase(@NonNull final String name) throws BackendException {
+  public CosmosKeyColumnValueStore openDatabase(@NonNull final String name) throws BackendException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(name),
         "database name may not be null or empty");
     return factory.create(this /*manager*/, prefix, name);
   }
 
   @Override
-  public CosmosSingleRowStore openDatabase(@NonNull final String name, Container metaData)
+  public CosmosKeyColumnValueStore openDatabase(@NonNull final String name, Container metaData)
       throws BackendException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(name),
         "database name may not be null or empty");

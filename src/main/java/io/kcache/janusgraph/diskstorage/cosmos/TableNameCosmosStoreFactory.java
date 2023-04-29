@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.configuration.Configuration;
 
 /**
  * Creates backend store based on table name.
@@ -28,16 +29,24 @@ import org.janusgraph.diskstorage.BackendException;
 @Slf4j
 public class TableNameCosmosStoreFactory implements CosmosStoreFactory {
 
-  private final ConcurrentMap<String, CosmosSingleRowStore> stores = new ConcurrentHashMap<>();
+
+
+  private final Configuration config;
+  private final ConcurrentMap<String, CosmosKeyColumnValueStore> stores = new ConcurrentHashMap<>();
+
+  public TableNameCosmosStoreFactory(Configuration config) {
+    this.config = config;
+  }
 
   @Override
-  public CosmosSingleRowStore create(final CosmosStoreManager manager, final String prefix,
+  public CosmosKeyColumnValueStore create(final CosmosStoreManager manager, final String prefix,
       final String name) throws BackendException {
     log.debug("Entering TableNameDynamoDbStoreFactory.create prefix:{} name:{}", prefix, name);
     // ensure there is only one instance used per table name.
 
-    final CosmosSingleRowStore storeBackend = new CosmosSingleRowStore(manager, prefix, name);
-    final CosmosSingleRowStore previous = stores.putIfAbsent(name, storeBackend);
+    BackendDataModel model = BackendDataModel.valueOf(config.get(Constants.STORES_DATA_MODEL));
+    final CosmosKeyColumnValueStore storeBackend = model.createStoreBackend(manager, prefix, name);
+    final CosmosKeyColumnValueStore previous = stores.putIfAbsent(name, storeBackend);
     if (null == previous) {
       try {
         storeBackend.ensureStore();
@@ -45,19 +54,19 @@ public class TableNameCosmosStoreFactory implements CosmosStoreFactory {
         throw e;
       }
     }
-    final CosmosSingleRowStore store = stores.get(name);
+    final CosmosKeyColumnValueStore store = stores.get(name);
     log.debug("Exiting TableNameDynamoDbStoreFactory.create prefix:{} name:{} returning:{}", prefix,
         name, store);
     return store;
   }
 
   @Override
-  public Iterable<CosmosSingleRowStore> getAllStores() {
+  public Iterable<CosmosKeyColumnValueStore> getAllStores() {
     return stores.values();
   }
 
   @Override
-  public CosmosSingleRowStore getStore(final String store) {
+  public CosmosKeyColumnValueStore getStore(final String store) {
     return stores.get(store);
   }
 

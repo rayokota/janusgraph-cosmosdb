@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.kcache.janusgraph.diskstorage.cosmos.Constants;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -105,5 +104,4 @@ public class EntryBuilder extends AbstractBuilder {
         this.slice = true;
         return this;
     }
-
 }

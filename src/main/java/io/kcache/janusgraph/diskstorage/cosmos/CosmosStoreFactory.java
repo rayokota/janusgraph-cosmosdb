@@ -33,7 +33,7 @@ public interface CosmosStoreFactory {
    * @return a KCVStore with the given name and table prefix
    * @throws BackendException if unable to create the store
    */
-  CosmosSingleRowStore create(CosmosStoreManager manager, String prefix, String name)
+  CosmosKeyColumnValueStore create(CosmosStoreManager manager, String prefix, String name)
       throws BackendException;
 
   /**
@@ -41,7 +41,7 @@ public interface CosmosStoreFactory {
    *
    * @return an Iterable of all the stores interned in this factory
    */
-  Iterable<CosmosSingleRowStore> getAllStores();
+  Iterable<CosmosKeyColumnValueStore> getAllStores();
 
   /**
    * Gets backend store for store name.
@@ -49,6 +49,6 @@ public interface CosmosStoreFactory {
    * @param store the name of the store to get
    * @return the KCVStore that corresponds to the store name provided
    */
-  CosmosSingleRowStore getStore(String store);
+  CosmosKeyColumnValueStore getStore(String store);
 
 }

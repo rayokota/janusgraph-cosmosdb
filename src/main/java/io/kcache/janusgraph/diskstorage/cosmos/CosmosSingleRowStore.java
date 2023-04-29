@@ -115,13 +115,13 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(), ObjectNode.class)
         .block();
 
-    final List<Entry> filteredEntries = extractEntriesFromGetItemResult(
+    EntryList filteredEntries = extractEntriesFromGetItemResult(
         response != null ? response.getItem() : null,
         query.getSliceStart(), query.getSliceEnd(), query.getLimit());
     log.debug("Exiting getSliceKeySliceQuery table:{} query:{} txh:{} returning:{}", getContainerName(),
         encodeForLog(query), txh,
         filteredEntries.size());
-    return StaticArrayEntryList.of(filteredEntries);
+    return filteredEntries;
   }
 
   @Override
@@ -139,12 +139,9 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
                   ObjectNode.class);
           return Mono.zip(Mono.just(key), mono);
         })
-        .map(tuple -> tuple.mapT2(response -> {
-              List<Entry> filteredEntries = extractEntriesFromGetItemResult(
-                  response.getItem(),
-                  query.getSliceStart(), query.getSliceEnd(), query.getLimit());
-              return StaticArrayEntryList.of(filteredEntries);
-            })
+        .map(tuple -> tuple.mapT2(response -> extractEntriesFromGetItemResult(
+            response.getItem(),
+            query.getSliceStart(), query.getSliceEnd(), query.getLimit()))
         )
         .sequential()
         .collectMap(Tuple2::getT1, Tuple2::getT2)

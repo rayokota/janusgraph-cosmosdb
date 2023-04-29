@@ -19,7 +19,6 @@ import static io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.en
 
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
-import com.azure.cosmos.models.CosmosPatchOperations;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedFlux;
@@ -29,6 +28,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.kcache.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
 import io.kcache.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
+import io.kcache.janusgraph.diskstorage.cosmos.builder.ItemBuilder;
 import io.kcache.janusgraph.diskstorage.cosmos.iterator.FluxBackedKeyIterator;
 import io.kcache.janusgraph.diskstorage.cosmos.iterator.MultiRowFluxInterpreter;
 import java.util.ArrayList;
@@ -77,8 +77,6 @@ import reactor.util.function.Tuples;
  */
 @Slf4j
 public class CosmosStore extends AbstractCosmosStore {
-
-    private static ObjectMapper MAPPER = new ObjectMapper();
 
     public CosmosStore(final CosmosStoreManager manager, final String prefix, final String storeName) {
         super(manager, prefix, storeName);
@@ -193,9 +191,11 @@ public class CosmosStore extends AbstractCosmosStore {
 
         if (mutation.hasAdditions()) {
             for (Entry e : mutation.getAdditions()) {
-                ObjectNode item = MAPPER.createObjectNode();
-                item.put(Constants.JANUSGRAPH_COLUMN_KEY, encodeKey(e.getColumn()));
-                item.put(Constants.JANUSGRAPH_VALUE, encodeValue(e.getValue()));
+                ObjectNode item = new ItemBuilder()
+                    .partitionKey(partitionKey)
+                    .columnKey(e.getColumn())
+                    .value(e.getValue())
+                    .build();
                 responses.add(getContainer().upsertItem(item, new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions()));
             }
         }

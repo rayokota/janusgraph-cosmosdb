@@ -51,7 +51,7 @@ public abstract class AbstractBuilder {
     }
   }
 
-  public StaticBuffer decodeKey(final ObjectNode key, final String name) {
+  public static StaticBuffer decodeKey(final ObjectNode key, final String name) {
     if (null == key || !key.has(name)) {
       return null;
     }
