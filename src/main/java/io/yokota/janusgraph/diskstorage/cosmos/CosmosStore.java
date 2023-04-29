@@ -121,7 +121,12 @@ public class CosmosStore extends AbstractCosmosStore {
         return pagedFlux
             .byPage(100)
             .flatMap(response -> Flux.fromIterable(response.getResults()))
-            .map(item -> new EntryBuilder(item).slice(query.getSliceStart(), query.getSliceEnd()).build())
+            .flatMap(item -> {
+                final Entry entry = new EntryBuilder(item)
+                    .slice(query.getSliceStart(), query.getSliceEnd())
+                    .build();
+                return entry != null ? Flux.just(entry) : Flux.empty();
+            })
             .take(query.getLimit());
     }
 

@@ -22,7 +22,11 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.janusgraph.diskstorage.StaticBuffer;
+import org.janusgraph.diskstorage.util.BufferUtil;
 import org.janusgraph.diskstorage.util.StaticArrayBuffer;
+import org.janusgraph.diskstorage.util.time.TimestampProviders;
+import org.janusgraph.graphdb.database.serialize.DataOutput;
+import org.janusgraph.graphdb.database.serialize.StandardSerializer;
 
 /**
  * AbstractBuilder is responsible for some of the StaticBuffer to String and visa-versa required for
@@ -38,7 +42,8 @@ public abstract class AbstractBuilder {
       return null;
     }
     final ByteBuffer buf = input.asByteBuffer();
-    final byte[] bytes = Arrays.copyOf(buf.array(), buf.limit());
+    final byte[] bytes = new byte[buf.remaining()];
+    buf.get(bytes);
     // use hex to maintain sort order
     return Hex.encodeHexString(bytes);
   }
@@ -70,6 +75,31 @@ public abstract class AbstractBuilder {
     System.out.println(k4.compareTo(k5));
 
 
+    Object x = TimestampProviders.MICRO;
+
+    StaticBuffer sb1 = object2StaticBuffer(x);
+    System.out.println("sb1 " + sb1);
+    String v1 = AbstractBuilder.encodeValue(sb1);
+    System.out.println("v1 " + v1);
+    StaticBuffer sb2 = AbstractBuilder.decodeValue(v1);
+    System.out.println("sb2 " + sb2);
+    Object y = staticBuffer2Object(sb2, TimestampProviders.class);
+
+    System.out.println("*** hi " + y);
+
+
+  }
+  private static <O> StaticBuffer object2StaticBuffer(final O value) {
+    StandardSerializer serializer = new StandardSerializer();
+    DataOutput out = serializer.getDataOutput(128);
+    out.writeClassAndObject(value);
+    return out.getStaticBuffer();
+  }
+
+  private static <O> O staticBuffer2Object(final StaticBuffer s, Class<O> dataType) {
+    StandardSerializer serializer = new StandardSerializer();
+    Object value = serializer.readClassAndObject(s.asReadBuffer());
+    return (O)value;
   }
 
   public static StaticBuffer decodeKey(final ObjectNode key, final String name) {
@@ -84,11 +114,15 @@ public abstract class AbstractBuilder {
       return null;
     }
     final ByteBuffer buf = input.asByteBuffer();
-    final byte[] bytes = Arrays.copyOf(buf.array(), buf.limit());
+    final byte[] bytes = new byte[buf.remaining()];
+    buf.get(bytes);
     return Base64.encodeBase64String(bytes);
   }
 
   public static StaticBuffer decodeValue(final String input) {
+    if (input == null) {
+      return BufferUtil.emptyBuffer();
+    }
     return new StaticArrayBuffer(Base64.decodeBase64(input));
   }
 }
