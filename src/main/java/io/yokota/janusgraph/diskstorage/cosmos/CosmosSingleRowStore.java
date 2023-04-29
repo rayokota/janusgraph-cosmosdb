@@ -16,6 +16,7 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
+import com.azure.cosmos.models.CosmosPatchItemRequestOptions;
 import com.azure.cosmos.models.CosmosPatchOperations;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
@@ -173,7 +174,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
           String key = AbstractBuilder.encodeKey(entry.getKey());
           CosmosPatchOperations ops = convertToPatch(entry.getValue());
           Mono<CosmosItemResponse<ObjectNode>> mono =
-              getContainer().patchItem(key, new PartitionKey(key), ops, ObjectNode.class);
+              getContainer().patchItem(key, new PartitionKey(key), ops, new CosmosPatchItemRequestOptions(), ObjectNode.class);
           return mono.then();
         });
   }

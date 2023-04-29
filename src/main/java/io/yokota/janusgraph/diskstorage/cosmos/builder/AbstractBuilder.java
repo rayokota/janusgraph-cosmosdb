@@ -16,6 +16,7 @@ package io.yokota.janusgraph.diskstorage.cosmos.builder;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
@@ -49,6 +50,26 @@ public abstract class AbstractBuilder {
     } catch (DecoderException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  // TODO remove
+  public static void main(String[] args) {
+    String s = "ai there";
+    String s2 = "ii there";
+    String s3 = "ji there";
+    String s4 = "ki there";
+    String s5 = "zi there";
+    String k  = encodeKey(new StaticArrayBuffer(s.getBytes(StandardCharsets.UTF_8)));
+    String k2  = encodeKey(new StaticArrayBuffer(s2.getBytes(StandardCharsets.UTF_8)));
+    String k3  = encodeKey(new StaticArrayBuffer(s3.getBytes(StandardCharsets.UTF_8)));
+    String k4  = encodeKey(new StaticArrayBuffer(s4.getBytes(StandardCharsets.UTF_8)));
+    String k5  = encodeKey(new StaticArrayBuffer(s5.getBytes(StandardCharsets.UTF_8)));
+    System.out.println(k.compareTo(k2));
+    System.out.println(k2.compareTo(k3));
+    System.out.println(k3.compareTo(k4));
+    System.out.println(k4.compareTo(k5));
+
+
   }
 
   public static StaticBuffer decodeKey(final ObjectNode key, final String name) {

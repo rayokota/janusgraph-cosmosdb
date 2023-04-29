@@ -176,7 +176,7 @@ public class CosmosStore extends AbstractCosmosStore {
 
         if (mutation.hasDeletions()) {
             for (StaticBuffer b : mutation.getDeletions()) {
-                Mono<CosmosItemResponse<Object>> response = getContainer().deleteItem(encodeKey(b), new PartitionKey(encodeKey(partitionKey)));
+                Mono<CosmosItemResponse<Object>> response = getContainer().deleteItem(encodeKey(b), new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions());
                 responses.add(response);
             }
         }
