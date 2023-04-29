@@ -179,7 +179,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
         .locking(false)
         .multiQuery(true)
         .orderedScan(false)
-        .preferredTimestamps(TimestampProviders.MILLI) //ignored because timestamps is false
+        //.preferredTimestamps(TimestampProviders.MILLI) //ignored because timestamps is false
         .storeTTL(false)
         .timestamps(false)
         .transactional(false)

@@ -110,8 +110,10 @@ public class CosmosStore extends AbstractCosmosStore {
     private Flux<Entry> query(final StaticBuffer key, SliceQuery query, final StoreTransaction txh) {
         String itemId = encodeKey(key);
         String sql = "SELECT * FROM c where c.pk = '" + itemId
-            + "' and c.rk >= '" + encodeKey(query.getSliceStart())
-            + "' and c.rk < '" + encodeKey(query.getSliceEnd());
+            + "' and c.id >= '" + encodeKey(query.getSliceStart())
+            + "' and c.id < '" + encodeKey(query.getSliceEnd())
+            + "'";
+
         CosmosPagedFlux<ObjectNode> pagedFlux = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
         log.debug("Exiting getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(
             query), txh);
@@ -174,7 +176,8 @@ public class CosmosStore extends AbstractCosmosStore {
 
         if (mutation.hasDeletions()) {
             for (StaticBuffer b : mutation.getDeletions()) {
-                responses.add(getContainer().deleteItem(encodeKey(b), new PartitionKey(encodeKey(partitionKey))));
+                Mono<CosmosItemResponse<Object>> response = getContainer().deleteItem(encodeKey(b), new PartitionKey(encodeKey(partitionKey)));
+                responses.add(response);
             }
         }
 
@@ -185,7 +188,8 @@ public class CosmosStore extends AbstractCosmosStore {
                     .columnKey(e.getColumn())
                     .value(e.getValue())
                     .build();
-                responses.add(getContainer().upsertItem(item, new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions()));
+                Mono<CosmosItemResponse<Object>> response = getContainer().upsertItem(item, new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions());
+                responses.add(response);
             }
         }
         return responses;
