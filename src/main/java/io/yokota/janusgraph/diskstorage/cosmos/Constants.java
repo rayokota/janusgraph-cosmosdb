@@ -156,6 +156,10 @@ public final class Constants {
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "endpoint",
           "Sets the service endpoint to use for connecting to Cosmos DB.",
           LOCAL, String.class);
+  public static final ConfigOption<String> COSMOS_CLIENT_KEY =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "key",
+          "Sets the authentication key for connecting to Cosmos DB.",
+          LOCAL, String.class);
   public static final ConfigOption<String> COSMOS_CLIENT_SIGNING_REGION =
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "signing-region",
           "Sets the signing region to use for signing requests to Cosmos DB. Required.",

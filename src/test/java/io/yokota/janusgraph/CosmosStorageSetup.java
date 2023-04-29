@@ -13,6 +13,8 @@
 
 package io.yokota.janusgraph;
 
+import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
+import io.yokota.janusgraph.diskstorage.cosmos.Constants;
 import org.janusgraph.StorageSetup;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
@@ -28,8 +30,11 @@ public class CosmosStorageSetup extends StorageSetup {
 
     public static ModifiableConfiguration getCosmosConfiguration(final String graphName) {
         return buildGraphConfiguration()
-                .set(STORAGE_BACKEND,"io.yokota.janusgraph.diskstorage.cosmos.CosmosStoreManager")
-                .set(DROP_ON_CLEAR, false);
+            .set(STORAGE_BACKEND,"io.yokota.janusgraph.diskstorage.cosmos.CosmosStoreManager")
+            .set(Constants.COSMOS_CLIENT_ENDPOINT, "https://localhost:8081")
+            .set(Constants.COSMOS_CLIENT_KEY, "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==")
+            .set(Constants.STORES_DATA_MODEL, BackendDataModel.MULTI.name(), graphName)
+            .set(DROP_ON_CLEAR, false);
     }
 
     public static WriteConfiguration getCosmosGraphConfiguration() {

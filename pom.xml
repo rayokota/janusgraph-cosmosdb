@@ -11,15 +11,14 @@
     <name>JanusGraph Cosmos DB Storage Adapter</name>
 
     <properties>
-        <maven.compiler.plugin.version>3.6.2</maven.compiler.plugin.version>
-        <jdk.version>1.8</jdk.version>
-        <cosmos.version>4.43.0</cosmos.version>
-        <jackson.version>2.11.1</jackson.version>
-        <janusgraph.version>0.5.2</janusgraph.version>
-        <kcache.version>3.3.2</kcache.version>
+        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
+        <jdk.version>11</jdk.version>
+        <cosmos.version>4.44.0</cosmos.version>
+        <jackson.version>2.15.0</jackson.version>
+        <janusgraph.version>0.6.2</janusgraph.version>
         <lombok.version>1.18.26</lombok.version>
-        <slf4j.version>1.7.30</slf4j.version>
-        <dependency.plugin.version>2.10</dependency.plugin.version>
+        <slf4j.version>2.0.7</slf4j.version>
+        <dependency.plugin.version>3.5.0</dependency.plugin.version>
         <test.excluded.groups>MEMORY_TESTS,PERFORMANCE_TESTS,BRITTLE_TESTS,CELL_TTL_TESTS</test.excluded.groups>
         <test.skip.default>false</test.skip.default>
         <test.skip.tp>true</test.skip.tp>
@@ -37,44 +36,29 @@
             <groupId>org.janusgraph</groupId>
             <artifactId>janusgraph-core</artifactId>
             <version>${janusgraph.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.janusgraph</groupId>
             <artifactId>janusgraph-test</artifactId>
             <version>${janusgraph.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-cosmos</artifactId>
             <version>${cosmos.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.kcache</groupId>
-            <artifactId>kcache</artifactId>
-            <version>${kcache.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.kcache</groupId>
-            <artifactId>kcache-bdbje</artifactId>
-            <version>${kcache.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.kcache</groupId>
-            <artifactId>kcache-lmdb</artifactId>
-            <version>${kcache.version}</version>
-        </dependency>
-        <!--
-        <dependency>
-            <groupId>io.kcache</groupId>
-            <artifactId>kcache-mapdb</artifactId>
-            <version>${kcache.version}</version>
-        </dependency>
-        -->
-        <dependency>
-            <groupId>io.kcache</groupId>
-            <artifactId>kcache-rocksdb</artifactId>
-            <version>${kcache.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
