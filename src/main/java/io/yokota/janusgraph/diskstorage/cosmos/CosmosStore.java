@@ -104,6 +104,10 @@ public class CosmosStore extends AbstractCosmosStore {
         Flux<Entry> flux = query(query.getKey(), sliceQuery, txh);
         log.debug("Exiting getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
         // TODO make page size configurable?
+        /*
+        List<Entry> entries = flux.collectList().block();
+        return StaticArrayEntryList.of(entries);
+         */
         return StaticArrayEntryList.of(flux.toIterable());
     }
 
