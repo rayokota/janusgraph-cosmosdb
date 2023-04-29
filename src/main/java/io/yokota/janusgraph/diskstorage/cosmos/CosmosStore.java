@@ -78,37 +78,48 @@ public class CosmosStore extends AbstractCosmosStore {
 
     @Override
     public KeyIterator getKeys(final SliceQuery query, final StoreTransaction txh) throws BackendException {
-        log.debug("==> getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
+        try {
+            log.debug("==> getKeys table:{} query:{} txh:{}", getContainerName(),
+                encodeForLog(query), txh);
 
-        String sql = "SELECT * FROM c";
-        CosmosPagedFlux<ObjectNode> pagedFlux = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
-        // TODO make page size configurable?
-        Flux<GroupedFlux<String, ObjectNode>> flux = pagedFlux
-            .byPage(100)
-            .flatMap(response -> Flux.fromIterable(response.getResults()))
-            .groupBy(item -> item.get(Constants.JANUSGRAPH_PARTITION_KEY).textValue());
+            String sql = "SELECT * FROM c";
+            CosmosPagedFlux<ObjectNode> pagedFlux = getContainer().queryItems(sql,
+                new CosmosQueryRequestOptions(), ObjectNode.class);
+            // TODO make page size configurable?
+            Flux<GroupedFlux<String, ObjectNode>> flux = pagedFlux
+                .byPage(100)
+                .flatMap(response -> Flux.fromIterable(response.getResults()))
+                .groupBy(item -> item.get(Constants.JANUSGRAPH_PARTITION_KEY).textValue());
 
-        log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
-        return new FluxBackedKeyIterator<>(flux, new MultiRowFluxInterpreter(this, query));
+            return new FluxBackedKeyIterator<>(flux, new MultiRowFluxInterpreter(this, query));
+        } finally {
+            log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(),
+                encodeForLog(query), txh);
+        }
     }
 
     @Override
     public EntryList getSlice(final KeySliceQuery query, final StoreTransaction txh)
             throws BackendException {
-        log.debug("==> getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
+        try {
+            log.debug("==> getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(),
+                encodeForLog(query), txh);
 
-        SliceQuery sliceQuery = new SliceQuery(query.getSliceStart(), query.getSliceEnd());
-        if (query.hasLimit()) {
-            sliceQuery.setLimit(query.getLimit());
+            SliceQuery sliceQuery = new SliceQuery(query.getSliceStart(), query.getSliceEnd());
+            if (query.hasLimit()) {
+                sliceQuery.setLimit(query.getLimit());
+            }
+            Flux<Entry> flux = query(query.getKey(), sliceQuery, txh);
+            // TODO make page size configurable?
+            /*
+            List<Entry> entries = flux.collectList().block();
+            return StaticArrayEntryList.of(entries);
+             */
+            return StaticArrayEntryList.of(flux.toIterable());
+        } finally {
+            log.debug("<== getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(),
+                encodeForLog(query), txh);
         }
-        Flux<Entry> flux = query(query.getKey(), sliceQuery, txh);
-        log.debug("<== getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
-        // TODO make page size configurable?
-        /*
-        List<Entry> entries = flux.collectList().block();
-        return StaticArrayEntryList.of(entries);
-         */
-        return StaticArrayEntryList.of(flux.toIterable());
     }
 
     private Flux<Entry> query(final StaticBuffer key, SliceQuery query, final StoreTransaction txh) {
@@ -119,8 +130,6 @@ public class CosmosStore extends AbstractCosmosStore {
             + "'";
 
         CosmosPagedFlux<ObjectNode> pagedFlux = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
-        log.debug("<== getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(
-            query), txh);
         // TODO make page size configurable?
         return pagedFlux
             .byPage(100)
@@ -136,37 +145,47 @@ public class CosmosStore extends AbstractCosmosStore {
 
     @Override
     public Map<StaticBuffer, EntryList> getSlice(final List<StaticBuffer> keys, final SliceQuery query, final StoreTransaction txh) throws BackendException {
-        log.debug("==> getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}",
-                  getContainerName(),
-                  encodeForLog(keys),
-                  encodeForLog(query),
-                  txh);
+        try {
+            log.debug("==> getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}",
+                getContainerName(),
+                encodeForLog(keys),
+                encodeForLog(query),
+                txh);
 
-        return Flux.fromIterable(keys)
-            .parallel()
-            .flatMap(key -> Mono.zip(Mono.just(key), query(key, query, txh).collectList()))
-            .sequential()
-            .collectMap(Tuple2::getT1, tuple -> StaticArrayEntryList.of(tuple.getT2()))
-            .block();
+            return Flux.fromIterable(keys)
+                .parallel()
+                .flatMap(key -> Mono.zip(Mono.just(key), query(key, query, txh).collectList()))
+                .sequential()
+                .collectMap(Tuple2::getT1, tuple -> StaticArrayEntryList.of(tuple.getT2()))
+                .block();
+        } finally {
+            log.debug("<== getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}",
+                getContainerName(),
+                encodeForLog(keys),
+                encodeForLog(query),
+                txh);
+        }
     }
 
     @Override
     public void mutate(final StaticBuffer key, final List<Entry> additions, final List<StaticBuffer> deletions, final StoreTransaction txh) throws BackendException {
-        log.debug("==> mutate table:{} keys:{} additions:{} deletions:{} txh:{}",
-                  getContainerName(),
-                  encodeKeyForLog(key),
-                  encodeForLog(additions),
-                  encodeForLog(deletions),
-                  txh);
-        // this method also filters out deletions that are also added
-        super.mutateOneKey(key, new KCVMutation(additions, deletions), txh);
-
-        log.debug("<== mutate table:{} keys:{} additions:{} deletions:{} txh:{} returning:void",
-                  getContainerName(),
-                  encodeKeyForLog(key),
-                  encodeForLog(additions),
-                  encodeForLog(deletions),
-                  txh);
+        try {
+            log.debug("==> mutate table:{} keys:{} additions:{} deletions:{} txh:{}",
+                getContainerName(),
+                encodeKeyForLog(key),
+                encodeForLog(additions),
+                encodeForLog(deletions),
+                txh);
+            // this method also filters out deletions that are also added
+            super.mutateOneKey(key, new KCVMutation(additions, deletions), txh);
+        } finally {
+            log.debug("<== mutate table:{} keys:{} additions:{} deletions:{} txh:{} returning:void",
+                getContainerName(),
+                encodeKeyForLog(key),
+                encodeForLog(additions),
+                encodeForLog(deletions),
+                txh);
+        }
     }
 
     @Override
