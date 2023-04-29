@@ -29,6 +29,7 @@ import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.util.RecordIterator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.GroupedFlux;
+import reactor.core.publisher.Mono;
 
 /**
  * Interprets Scan results for MULTI stores and assumes that results are SEQUENTIAL. This means that the scan is assumed to be non-segmented.
@@ -51,26 +52,22 @@ public class MultiRowFluxInterpreter implements FluxContextInterpreter<GroupedFl
     public List<SingleKeyRecordIterator> buildRecordIterators(final Flux<GroupedFlux<String, ObjectNode>> flux) {
         return flux.flatMap(item -> {
             final StaticBuffer key = decodeKey(item.key());
-            final RecordIterator<Entry> recordIterator = createRecordIterator(item);
-            if (recordIterator.hasNext()) {
-                return Flux.just(new SingleKeyRecordIterator(key, recordIterator));
-            } else {
-                return Flux.empty();
-            }
+            final Mono<StaticRecordIterator> recordIterator = createRecordIterator(item);
+            return recordIterator.map(it -> new SingleKeyRecordIterator(key, it));
         }).collectList().block();
     }
 
-    private RecordIterator<Entry> createRecordIterator(final GroupedFlux<String, ObjectNode> flux) {
-        return new StaticRecordIterator(flux.collectList()
-            .block()
-            // TODO fix NPE
-            .stream()
-            .flatMap(item -> {
-                // DynamoDB's between includes the end of the range, but Titan's slice queries expect the end key to be exclusive
-                final Entry entry = new EntryBuilder(item)
-                    .slice(sliceQuery.getSliceStart(), sliceQuery.getSliceEnd())
-                    .build();
-                return entry != null ? Stream.of(entry) : Stream.empty();
-            }).collect(Collectors.toList()));
+    private Mono<StaticRecordIterator> createRecordIterator(final GroupedFlux<String, ObjectNode> flux) {
+        return flux
+            .collectList()
+            .map(items ->
+                new StaticRecordIterator(items.stream().flatMap(item -> {
+                    // DynamoDB's between includes the end of the range, but Titan's slice queries expect the end key to be exclusive
+                    final Entry entry = new EntryBuilder(item)
+                        .slice(sliceQuery.getSliceStart(), sliceQuery.getSliceEnd())
+                        .build();
+                    return entry != null ? Stream.of(entry) : Stream.empty();
+                }).collect(Collectors.toList()))
+            );
     }
 }
