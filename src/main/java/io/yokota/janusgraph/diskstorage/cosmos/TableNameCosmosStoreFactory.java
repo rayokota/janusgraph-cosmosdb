@@ -55,7 +55,7 @@ public class TableNameCosmosStoreFactory implements CosmosStoreFactory {
       }
     }
     final CosmosKeyColumnValueStore store = stores.get(name);
-    log.debug("Exiting TableNameDynamoDbStoreFactory.create prefix:{} name:{} returning:{}", prefix,
+    log.debug("<== TableNameDynamoDbStoreFactory.create prefix:{} name:{} returning:{}", prefix,
         name, store);
     return store;
   }

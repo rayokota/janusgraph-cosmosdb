@@ -88,7 +88,7 @@ public class CosmosStore extends AbstractCosmosStore {
             .flatMap(response -> Flux.fromIterable(response.getResults()))
             .groupBy(item -> item.get(Constants.JANUSGRAPH_PARTITION_KEY).textValue());
 
-        log.debug("Exiting getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
+        log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
         return new FluxBackedKeyIterator<>(flux, new MultiRowFluxInterpreter(this, query));
     }
 
@@ -102,7 +102,7 @@ public class CosmosStore extends AbstractCosmosStore {
             sliceQuery.setLimit(query.getLimit());
         }
         Flux<Entry> flux = query(query.getKey(), sliceQuery, txh);
-        log.debug("Exiting getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
+        log.debug("<== getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
         // TODO make page size configurable?
         /*
         List<Entry> entries = flux.collectList().block();
@@ -119,7 +119,7 @@ public class CosmosStore extends AbstractCosmosStore {
             + "'";
 
         CosmosPagedFlux<ObjectNode> pagedFlux = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
-        log.debug("Exiting getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(
+        log.debug("<== getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(), encodeForLog(
             query), txh);
         // TODO make page size configurable?
         return pagedFlux
@@ -161,7 +161,7 @@ public class CosmosStore extends AbstractCosmosStore {
         // this method also filters out deletions that are also added
         super.mutateOneKey(key, new KCVMutation(additions, deletions), txh);
 
-        log.debug("Exiting mutate table:{} keys:{} additions:{} deletions:{} txh:{} returning:void",
+        log.debug("<== mutate table:{} keys:{} additions:{} deletions:{} txh:{} returning:void",
                   getContainerName(),
                   encodeKeyForLog(key),
                   encodeForLog(additions),

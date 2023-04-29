@@ -135,7 +135,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
       store.deleteStore();
     }
     client.getDatabase(databaseName).delete(new CosmosDatabaseRequestOptions()).block();
-    log.debug("Exiting clearStorage returning:void");
+    log.debug("<== clearStorage returning:void");
   }
 
   @Override
@@ -152,14 +152,14 @@ public class CosmosStoreManager extends DistributedStoreManager implements
       store.close();
     }
     client.close();
-    log.debug("Exiting close returning:void");
+    log.debug("<== close returning:void");
   }
 
   @Override
   public String getName() {
     log.debug("==> getName");
     final String name = getClass().getSimpleName() + prefix;
-    log.debug("Exiting getName returning:{}", name);
+    log.debug("<== getName returning:{}", name);
     return name;
   }
 

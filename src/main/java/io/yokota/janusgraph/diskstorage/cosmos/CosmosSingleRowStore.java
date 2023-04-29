@@ -99,7 +99,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     Flux<ObjectNode> flux = pagedFlux
         .byPage(100)
         .flatMap(response -> Flux.fromIterable(response.getResults()));
-    log.debug("Exiting getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
+    log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
     return new FluxBackedKeyIterator<>(flux, new SingleRowFluxInterpreter(query));
   }
 
@@ -116,7 +116,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     EntryList filteredEntries = extractEntriesFromGetItemResult(
         response != null ? response.getItem() : null,
         query.getSliceStart(), query.getSliceEnd(), query.getLimit());
-    log.debug("Exiting getSliceKeySliceQuery table:{} query:{} txh:{} returning:{}", getContainerName(),
+    log.debug("<== getSliceKeySliceQuery table:{} query:{} txh:{} returning:{}", getContainerName(),
         encodeForLog(query), txh,
         filteredEntries.size());
     return filteredEntries;
@@ -157,7 +157,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         txh);
     super.mutateOneKey(hashKey, new KCVMutation(additions, deletions), txh);
 
-    log.debug("Exiting mutate table:{} keys:{} additions:{} deletions:{} txh:{} returning:void",
+    log.debug("<== mutate table:{} keys:{} additions:{} deletions:{} txh:{} returning:void",
         getContainerName(),
         encodeKeyForLog(hashKey),
         encodeForLog(additions),
