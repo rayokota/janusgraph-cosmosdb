@@ -89,13 +89,13 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
 
   @Override
   public final void ensureStore() throws BackendException {
-    log.debug("Entering ensureStore table:{}", containerName);
+    log.debug("==> ensureStore table:{}", containerName);
     createContainerIfNotExists();
   }
 
   @Override
   public final void deleteStore() throws BackendException {
-    log.debug("Entering deleteStore name:{}", name);
+    log.debug("==> deleteStore name:{}", name);
     container.delete(new CosmosContainerRequestOptions()).block();
   }
 

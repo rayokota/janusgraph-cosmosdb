@@ -130,7 +130,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
 
   @Override
   public void clearStorage() throws BackendException {
-    log.debug("Entering clearStorage");
+    log.debug("==> clearStorage");
     for (CosmosKeyColumnValueStore store : factory.getAllStores()) {
       store.deleteStore();
     }
@@ -147,7 +147,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
 
   @Override
   public void close() throws BackendException {
-    log.debug("Entering close");
+    log.debug("==> close");
     for (CosmosKeyColumnValueStore store : factory.getAllStores()) {
       store.close();
     }
@@ -157,7 +157,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
 
   @Override
   public String getName() {
-    log.debug("Entering getName");
+    log.debug("==> getName");
     final String name = getClass().getSimpleName() + prefix;
     log.debug("Exiting getName returning:{}", name);
     return name;

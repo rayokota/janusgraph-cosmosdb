@@ -91,7 +91,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   @Override
   public KeyIterator getKeys(final SliceQuery query, final StoreTransaction txh)
       throws BackendException {
-    log.debug("Entering getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
+    log.debug("==> getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
 
     String sql = "SELECT * FROM c";
     CosmosPagedFlux<ObjectNode> pagedFlux = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
@@ -106,7 +106,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   @Override
   public EntryList getSlice(final KeySliceQuery query, final StoreTransaction txh)
       throws BackendException {
-    log.debug("Entering getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(),
+    log.debug("==> getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(),
         encodeForLog(query), txh);
     String itemId = AbstractBuilder.encodeKey(query.getKey());
     CosmosItemResponse<ObjectNode> response = getContainer()
@@ -125,7 +125,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   @Override
   public Map<StaticBuffer, EntryList> getSlice(final List<StaticBuffer> keys,
       final SliceQuery query, final StoreTransaction txh) throws BackendException {
-    log.debug("Entering getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}", getContainerName(),
+    log.debug("==> getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}", getContainerName(),
         encodeForLog(keys), encodeForLog(query),
         txh);
     return Flux.fromIterable(keys)
@@ -149,7 +149,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   @Override
   public void mutate(final StaticBuffer hashKey, final List<Entry> additions,
       final List<StaticBuffer> deletions, final StoreTransaction txh) throws BackendException {
-    log.debug("Entering mutate table:{} keys:{} additions:{} deletions:{} txh:{}",
+    log.debug("==> mutate table:{} keys:{} additions:{} deletions:{} txh:{}",
         getContainerName(),
         encodeKeyForLog(hashKey),
         encodeForLog(additions),

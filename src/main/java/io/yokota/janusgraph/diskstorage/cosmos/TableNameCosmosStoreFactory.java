@@ -41,7 +41,7 @@ public class TableNameCosmosStoreFactory implements CosmosStoreFactory {
   @Override
   public CosmosKeyColumnValueStore create(final CosmosStoreManager manager, final String prefix,
       final String name) throws BackendException {
-    log.debug("Entering TableNameDynamoDbStoreFactory.create prefix:{} name:{}", prefix, name);
+    log.debug("==> TableNameDynamoDbStoreFactory.create prefix:{} name:{}", prefix, name);
     // ensure there is only one instance used per table name.
 
     BackendDataModel model = BackendDataModel.valueOf(config.get(Constants.STORES_DATA_MODEL, name));
