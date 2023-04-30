@@ -19,6 +19,7 @@ import io.yokota.janusgraph.diskstorage.cosmos.Constants;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.KeyBuilder;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
@@ -51,7 +52,9 @@ public class SingleRowFluxInterpreter implements FluxContextInterpreter<ObjectNo
             } else {
                 return Flux.empty();
             }
-        }).toIterable();
+        }).toStream().collect(Collectors.toList());
+        // TODO change? remove?
+        //}).toIterable();
     }
 
     private RecordIterator<Entry> createRecordIterator(final ObjectNode item) {

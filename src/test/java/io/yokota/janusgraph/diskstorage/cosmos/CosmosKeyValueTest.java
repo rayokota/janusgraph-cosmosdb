@@ -26,6 +26,13 @@ public class CosmosKeyValueTest extends KeyColumnValueStoreTest {
         return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
     }
 
+    // TODO remove
+    /*
+    @Override
+    public void scanTestWithSimpleJob() throws Exception {
+    }
+     */
+
     @AfterEach
     public void tearDown() throws Exception {
         if (null != this.manager) {

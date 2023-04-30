@@ -29,6 +29,7 @@ import io.yokota.janusgraph.diskstorage.cosmos.iterator.MultiRowFluxInterpreter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
@@ -111,7 +112,7 @@ public class CosmosStore extends AbstractCosmosStore {
             }
             Flux<Entry> flux = query(query.getKey(), sliceQuery, txh);
             // TODO check for NPE
-            List<Entry> entries = flux.collectList().block();
+            List<Entry> entries = flux.toStream().collect(Collectors.toList());
             return StaticArrayEntryList.of(entries);
             // TODO remove
             //return StaticArrayEntryList.of(flux.toIterable());
@@ -155,8 +156,8 @@ public class CosmosStore extends AbstractCosmosStore {
                 .parallel()
                 .flatMap(key -> Mono.zip(Mono.just(key), query(key, query, txh).collectList()))
                 .sequential()
-                .collectMap(Tuple2::getT1, tuple -> StaticArrayEntryList.of(tuple.getT2()))
-                .block();
+                .toStream()
+                .collect(Collectors.toMap(Tuple2::getT1, tuple -> StaticArrayEntryList.of(tuple.getT2())));
         } finally {
             log.debug("<== getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}",
                 getContainerName(),

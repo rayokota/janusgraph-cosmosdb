@@ -54,7 +54,7 @@ public class MultiRowFluxInterpreter implements FluxContextInterpreter<GroupedFl
             final StaticBuffer key = decodeKey(item.key());
             final Mono<StaticRecordIterator> recordIterator = createRecordIterator(item);
             return recordIterator.map(it -> new SingleKeyRecordIterator(key, it));
-        }).collectList().block();
+        }).toStream().collect(Collectors.toList());
     }
 
     private Mono<StaticRecordIterator> createRecordIterator(final GroupedFlux<String, ObjectNode> flux) {

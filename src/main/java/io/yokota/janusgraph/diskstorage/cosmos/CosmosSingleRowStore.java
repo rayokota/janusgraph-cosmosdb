@@ -29,6 +29,7 @@ import io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
@@ -142,8 +143,8 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
             query.getSliceStart(), query.getSliceEnd(), query.getLimit()))
         )
         .sequential()
-        .collectMap(Tuple2::getT1, Tuple2::getT2)
-        .block();
+        .toStream()
+        .collect(Collectors.toMap(Tuple2::getT1, Tuple2::getT2));
   }
 
   @Override
