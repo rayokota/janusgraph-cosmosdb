@@ -82,7 +82,9 @@ public class CosmosStore extends AbstractCosmosStore {
             log.debug("==> getKeys table:{} query:{} txh:{}", getContainerName(),
                 encodeForLog(query), txh);
 
-            String sql = "SELECT * FROM c";
+            String sql = "SELECT * FROM c where c.id >= '" + encodeKey(query.getSliceStart())
+                + "' and c.id < '" + encodeKey(query.getSliceEnd())
+                + "'";
             CosmosPagedIterable<ObjectNode> iterable = getContainer().queryItems(sql,
                 new CosmosQueryRequestOptions(), ObjectNode.class);
             // TODO make page size configurable?

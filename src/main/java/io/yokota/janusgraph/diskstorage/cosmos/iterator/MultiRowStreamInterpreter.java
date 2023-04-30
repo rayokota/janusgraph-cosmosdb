@@ -56,6 +56,12 @@ public class MultiRowStreamInterpreter implements StreamContextInterpreter<List<
             final StaticBuffer key = decodeKey(partitionKey);
             final StaticRecordIterator recordIterator = createRecordIterator(items);
             return Stream.of(new SingleKeyRecordIterator(key, recordIterator));
+            /*
+            return recordIterator.hasNext()
+                ? Stream.of(new SingleKeyRecordIterator(key, recordIterator))
+                : Stream.empty();
+
+             */
         }).iterator();
     }
 

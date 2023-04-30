@@ -19,7 +19,7 @@ import org.janusgraph.diskstorage.KeyColumnValueStoreTest;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.junit.jupiter.api.AfterEach;
 
-public class CosmosKeyValueTest extends KeyColumnValueStoreTest {
+public class DummyCosmosKeyValueTest extends DummyKeyColumnValueStoreTest {
 
     @Override
     public KeyColumnValueStoreManager openStorageManager() throws BackendException {
