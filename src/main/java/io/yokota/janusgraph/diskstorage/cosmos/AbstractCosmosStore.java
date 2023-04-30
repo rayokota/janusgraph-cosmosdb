@@ -17,9 +17,6 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.CosmosAsyncDatabase;
-import com.azure.cosmos.CosmosClient;
-import com.azure.cosmos.CosmosContainer;
-import com.azure.cosmos.CosmosDatabase;
 import com.azure.cosmos.models.CosmosContainerProperties;
 import com.azure.cosmos.models.CosmosContainerRequestOptions;
 import com.azure.cosmos.models.CosmosContainerResponse;
@@ -111,7 +108,7 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     log.info("Create container " + containerName + " if not exists.");
 
     CosmosAsyncDatabase database = manager.getDatabase();
-    //  Create container if not exists
+    // Create container if not exists
     CosmosContainerProperties containerProperties =
         new CosmosContainerProperties(containerName, "/" + Constants.JANUSGRAPH_PARTITION_KEY);
 
@@ -119,7 +116,7 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     Mono<CosmosContainerResponse> containerIfNotExists =
         database.createContainerIfNotExists(containerProperties, throughputProperties);
 
-    //  Create container with 400 RU/s
+    // Create container with 400 RU/s
     CosmosContainerResponse cosmosContainerResponse = containerIfNotExists.block();
     container = database.getContainer(cosmosContainerResponse.getProperties().getId());
 

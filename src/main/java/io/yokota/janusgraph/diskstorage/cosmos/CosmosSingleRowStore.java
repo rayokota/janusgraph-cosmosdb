@@ -14,6 +14,11 @@
  */
 package io.yokota.janusgraph.diskstorage.cosmos;
 
+import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
+
+import com.azure.cosmos.models.CosmosBulkExecutionOptions;
+import com.azure.cosmos.models.CosmosBulkOperations;
+import com.azure.cosmos.models.CosmosItemOperation;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosPatchItemRequestOptions;
@@ -26,6 +31,7 @@ import io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.iterator.SingleRowStreamInterpreter;
 import io.yokota.janusgraph.diskstorage.cosmos.iterator.StreamBackedKeyIterator;
+import io.yokota.janusgraph.diskstorage.cosmos.mutation.BulkWriter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +117,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     try {
       log.debug("==> getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(),
           encodeForLog(query), txh);
-      String itemId = AbstractBuilder.encodeKey(query.getKey());
+      String itemId = encodeKey(query.getKey());
       CosmosItemResponse<ObjectNode> response = getContainer()
           .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
               ObjectNode.class).block();
@@ -139,7 +145,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       return keys.stream()
           .parallel()
           .map(key -> {
-                String itemId = AbstractBuilder.encodeKey(key);
+                String itemId = encodeKey(key);
                 CosmosItemResponse<ObjectNode> response = getContainer()
                     .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
                         ObjectNode.class).block();
@@ -182,30 +188,30 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   public void mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
-    mutations.forEach((k, v) -> {
-      String key = AbstractBuilder.encodeKey(k);
-      CosmosPatchOperations ops = convertToPatch(v);
-      CosmosItemResponse<ObjectNode> response =
-          getContainer().patchItem(key, new PartitionKey(key), ops,
-              new CosmosPatchItemRequestOptions(), ObjectNode.class).block();
-    });
+    BulkWriter bulkWriter = new BulkWriter(getContainer());
+    List<CosmosItemOperation> ops = mutations.entrySet().stream()
+            .map(entry -> convertToOp(encodeKey(entry.getKey()), entry.getValue()))
+        .collect(Collectors.toList());
+    ops.forEach(bulkWriter::scheduleWrites);
+    bulkWriter.execute(new CosmosBulkExecutionOptions())
+        .take(ops.size())
+        .blockLast();
   }
 
-  protected CosmosPatchOperations convertToPatch(KCVMutation mutation) {
+  protected CosmosItemOperation convertToOp(String key, KCVMutation mutation) {
     CosmosPatchOperations patch = CosmosPatchOperations.create();
-
     if (mutation.hasDeletions()) {
       for (StaticBuffer b : mutation.getDeletions()) {
-        patch.remove(AbstractBuilder.encodeKey(b));
+        patch.remove(encodeKey(b));
       }
     }
 
     if (mutation.hasAdditions()) {
       for (Entry e : mutation.getAdditions()) {
-        patch.add(AbstractBuilder.encodeKey(e.getColumn()),
+        patch.add(encodeKey(e.getColumn()),
             AbstractBuilder.encodeValue(e.getValue()));
       }
     }
-    return patch;
+    return CosmosBulkOperations.getPatchItemOperation(key, new PartitionKey(key), patch);
   }
 }

@@ -108,7 +108,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   private void createDatabaseIfNotExists() {
     log.info("Create database " + databaseName + " if not exists.");
 
-    //  Create database if not exists
+    // Create database if not exists
     Mono<CosmosDatabaseResponse> databaseIfNotExists = client.createDatabaseIfNotExists(databaseName);
     databaseIfNotExists.flatMap(databaseResponse -> {
       database = client.getDatabase(databaseResponse.getProperties().getId());

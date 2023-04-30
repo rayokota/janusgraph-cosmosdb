@@ -16,6 +16,9 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
 
+import com.azure.cosmos.models.CosmosBulkExecutionOptions;
+import com.azure.cosmos.models.CosmosBulkOperations;
+import com.azure.cosmos.models.CosmosItemOperation;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
@@ -26,6 +29,7 @@ import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.ItemBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.iterator.MultiRowStreamInterpreter;
 import io.yokota.janusgraph.diskstorage.cosmos.iterator.StreamBackedKeyIterator;
+import io.yokota.janusgraph.diskstorage.cosmos.mutation.BulkWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -189,18 +193,21 @@ public class CosmosStore extends AbstractCosmosStore {
   public void mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
-    mutations.forEach(this::mutate);
+    BulkWriter bulkWriter = new BulkWriter(getContainer());
+    List<CosmosItemOperation> ops = mutations.entrySet().stream()
+        .flatMap(entry -> convertToOps(entry.getKey(), entry.getValue()).stream())
+        .collect(Collectors.toList());
+    ops.forEach(bulkWriter::scheduleWrites);
+    bulkWriter.execute(new CosmosBulkExecutionOptions())
+        .take(ops.size())
+        .blockLast();
   }
 
-  protected List<CosmosItemResponse<Object>> mutate(StaticBuffer partitionKey,
-      KCVMutation mutation) {
-    List<CosmosItemResponse<Object>> responses = new ArrayList<>();
-
+  protected List<CosmosItemOperation> convertToOps(StaticBuffer partitionKey, KCVMutation mutation) {
+    List<CosmosItemOperation> result = new ArrayList<>();
     if (mutation.hasDeletions()) {
       for (StaticBuffer b : mutation.getDeletions()) {
-        CosmosItemResponse<Object> response = getContainer().deleteItem(encodeKey(b),
-            new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions()).block();
-        responses.add(response);
+        result.add(CosmosBulkOperations.getDeleteItemOperation(encodeKey(b), new PartitionKey(encodeKey(partitionKey))));
       }
     }
 
@@ -211,12 +218,10 @@ public class CosmosStore extends AbstractCosmosStore {
             .columnKey(e.getColumn())
             .value(e.getValue())
             .build();
-        CosmosItemResponse<ObjectNode> response = getContainer().upsertItem(item,
-            new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions()).block();
-        //responses.add(response);
+        result.add(CosmosBulkOperations.getUpsertItemOperation(item, new PartitionKey(encodeKey(partitionKey))));
       }
     }
-    return responses;
+    return result;
   }
 
   @Override
