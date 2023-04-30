@@ -67,7 +67,7 @@ public class EntryBuilder extends AbstractBuilder {
           return StaticArrayEntry.of(columnKey, value);
         })
         .filter(entry -> !slice
-            || entry.compareTo(sliceStartEntry) >= 0 && entry.compareTo(sliceEndEntry) < 0)
+            || (entry.compareTo(sliceStartEntry) >= 0 && entry.compareTo(sliceEndEntry) < 0))
         .sorted()
         .limit(limit)
         .collect(Collectors.toList());
@@ -87,13 +87,12 @@ public class EntryBuilder extends AbstractBuilder {
       return null;
     }
 
-    final String valueValue = item.get(Constants.JANUSGRAPH_VALUE).textValue();
-    final StaticBuffer value = decodeValue(valueValue);
-
-    // DynamoDB's between semantics include the end of a slice, but Titan expects the end to be exclusive
-    if (slice && column.compareTo(end) == 0) {
+    if (slice && (column.compareTo(start) < 0 || column.compareTo(end) >= 0)) {
       return null;
     }
+
+    final String valueValue = item.get(Constants.JANUSGRAPH_VALUE).textValue();
+    final StaticBuffer value = decodeValue(valueValue);
 
     return StaticArrayEntry.of(column, value);
   }
