@@ -19,8 +19,8 @@ import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.util.RecordIterator;
 
 /**
- * Holds a reference to a key and a RecordIterator for entries that correspond to that key.
- * Used as an intermediate value holder in AbstractLazyKeyIterator.
+ * Holds a reference to a key and a RecordIterator for entries that correspond to that key. Used as
+ * an intermediate value holder in AbstractLazyKeyIterator.
  *
  * @author Matthew Sowders
  * @author Alexander Patrikalakis
@@ -28,19 +28,19 @@ import org.janusgraph.diskstorage.util.RecordIterator;
  */
 public class SingleKeyRecordIterator {
 
-    private final StaticBuffer key;
-    private final RecordIterator<Entry> recordIterator;
+  private final StaticBuffer key;
+  private final RecordIterator<Entry> recordIterator;
 
-    SingleKeyRecordIterator(StaticBuffer key, RecordIterator<Entry> recordIterator) {
-        this.key = key;
-        this.recordIterator = recordIterator;
-    }
+  SingleKeyRecordIterator(StaticBuffer key, RecordIterator<Entry> recordIterator) {
+    this.key = key;
+    this.recordIterator = recordIterator;
+  }
 
-    public StaticBuffer getKey() {
-        return key;
-    }
+  public StaticBuffer getKey() {
+    return key;
+  }
 
-    RecordIterator<Entry> getRecordIterator() {
-        return recordIterator;
-    }
+  RecordIterator<Entry> getRecordIterator() {
+    return recordIterator;
+  }
 }

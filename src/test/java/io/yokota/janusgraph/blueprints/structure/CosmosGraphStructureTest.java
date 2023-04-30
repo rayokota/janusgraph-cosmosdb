@@ -14,12 +14,13 @@
 package io.yokota.janusgraph.blueprints.structure;
 
 import io.yokota.janusgraph.blueprints.CosmosGraphProvider;
-import org.janusgraph.core.JanusGraph;
 import org.apache.tinkerpop.gremlin.GraphProviderClass;
 import org.apache.tinkerpop.gremlin.structure.StructureStandardSuite;
+import org.janusgraph.core.JanusGraph;
 import org.junit.runner.RunWith;
 
 @RunWith(StructureStandardSuite.class)
 @GraphProviderClass(provider = CosmosGraphProvider.class, graph = JanusGraph.class)
 public class CosmosGraphStructureTest {
+
 }

@@ -17,7 +17,6 @@ package io.yokota.janusgraph.diskstorage.cosmos.builder;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
@@ -64,16 +63,15 @@ public abstract class AbstractBuilder {
     String s3 = "ji there";
     String s4 = "ki there";
     String s5 = "zi there";
-    String k  = encodeKey(new StaticArrayBuffer(s.getBytes(StandardCharsets.UTF_8)));
-    String k2  = encodeKey(new StaticArrayBuffer(s2.getBytes(StandardCharsets.UTF_8)));
-    String k3  = encodeKey(new StaticArrayBuffer(s3.getBytes(StandardCharsets.UTF_8)));
-    String k4  = encodeKey(new StaticArrayBuffer(s4.getBytes(StandardCharsets.UTF_8)));
-    String k5  = encodeKey(new StaticArrayBuffer(s5.getBytes(StandardCharsets.UTF_8)));
+    String k = encodeKey(new StaticArrayBuffer(s.getBytes(StandardCharsets.UTF_8)));
+    String k2 = encodeKey(new StaticArrayBuffer(s2.getBytes(StandardCharsets.UTF_8)));
+    String k3 = encodeKey(new StaticArrayBuffer(s3.getBytes(StandardCharsets.UTF_8)));
+    String k4 = encodeKey(new StaticArrayBuffer(s4.getBytes(StandardCharsets.UTF_8)));
+    String k5 = encodeKey(new StaticArrayBuffer(s5.getBytes(StandardCharsets.UTF_8)));
     System.out.println(k.compareTo(k2));
     System.out.println(k2.compareTo(k3));
     System.out.println(k3.compareTo(k4));
     System.out.println(k4.compareTo(k5));
-
 
     Object x = TimestampProviders.MICRO;
 
@@ -89,6 +87,7 @@ public abstract class AbstractBuilder {
 
 
   }
+
   private static <O> StaticBuffer object2StaticBuffer(final O value) {
     StandardSerializer serializer = new StandardSerializer();
     DataOutput out = serializer.getDataOutput(128);
@@ -99,7 +98,7 @@ public abstract class AbstractBuilder {
   private static <O> O staticBuffer2Object(final StaticBuffer s, Class<O> dataType) {
     StandardSerializer serializer = new StandardSerializer();
     Object value = serializer.readClassAndObject(s.asReadBuffer());
-    return (O)value;
+    return (O) value;
   }
 
   public static StaticBuffer decodeKey(final ObjectNode key, final String name) {

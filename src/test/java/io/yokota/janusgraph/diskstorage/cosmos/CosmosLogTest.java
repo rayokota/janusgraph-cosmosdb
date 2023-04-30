@@ -20,7 +20,7 @@ import org.janusgraph.diskstorage.log.KCVSLogTest;
 
 public class CosmosLogTest extends KCVSLogTest {
 
-    public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-        return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
-    }
+  public KeyColumnValueStoreManager openStorageManager() throws BackendException {
+    return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
+  }
 }

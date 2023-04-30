@@ -19,8 +19,8 @@ import org.janusgraph.graphdb.JanusGraphConcurrentTest;
 
 public class CosmosGraphConcurrentTest extends JanusGraphConcurrentTest {
 
-    @Override
-    public WriteConfiguration getConfiguration() {
-        return CosmosStorageSetup.getCosmosGraphConfiguration();
-    }
+  @Override
+  public WriteConfiguration getConfiguration() {
+    return CosmosStorageSetup.getCosmosGraphConfiguration();
+  }
 }

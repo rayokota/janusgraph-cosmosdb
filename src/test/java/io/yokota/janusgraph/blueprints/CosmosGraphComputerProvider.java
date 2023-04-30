@@ -15,32 +15,33 @@ package io.yokota.janusgraph.blueprints;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
 import io.yokota.janusgraph.diskstorage.cosmos.CosmosStoreTransaction;
+import java.time.Duration;
+import java.util.Set;
+import org.apache.tinkerpop.gremlin.GraphProvider;
 import org.janusgraph.blueprints.AbstractJanusGraphComputerProvider;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 import org.janusgraph.graphdb.olap.computer.FulgoraGraphComputer;
-import org.apache.tinkerpop.gremlin.GraphProvider;
-
-import java.time.Duration;
-import java.util.Set;
 
 @GraphProvider.Descriptor(computer = FulgoraGraphComputer.class)
 public class CosmosGraphComputerProvider extends AbstractJanusGraphComputerProvider {
 
-    @Override
-    public ModifiableConfiguration getJanusGraphConfiguration(String graphName, Class<?> test, String testMethodName) {
-        ModifiableConfiguration config = super.getJanusGraphConfiguration(graphName, test, testMethodName);
-        config.setAll(CosmosStorageSetup.getCosmosConfiguration().getAll());
-        config.set(GraphDatabaseConfiguration.IDAUTHORITY_WAIT, Duration.ofMillis(20));
-        config.set(GraphDatabaseConfiguration.STORAGE_TRANSACTIONAL,false);
-        return config;
-    }
+  @Override
+  public ModifiableConfiguration getJanusGraphConfiguration(String graphName, Class<?> test,
+      String testMethodName) {
+    ModifiableConfiguration config = super.getJanusGraphConfiguration(graphName, test,
+        testMethodName);
+    config.setAll(CosmosStorageSetup.getCosmosConfiguration().getAll());
+    config.set(GraphDatabaseConfiguration.IDAUTHORITY_WAIT, Duration.ofMillis(20));
+    config.set(GraphDatabaseConfiguration.STORAGE_TRANSACTIONAL, false);
+    return config;
+  }
 
-    @Override
-    public Set<Class> getImplementations() {
-        final Set<Class> implementations = super.getImplementations();
-        implementations.add(CosmosStoreTransaction.class);
-        return implementations;
-    }
+  @Override
+  public Set<Class> getImplementations() {
+    final Set<Class> implementations = super.getImplementations();
+    implementations.add(CosmosStoreTransaction.class);
+    return implementations;
+  }
 
 }

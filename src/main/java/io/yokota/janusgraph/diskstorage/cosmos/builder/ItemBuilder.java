@@ -20,34 +20,32 @@ import io.yokota.janusgraph.diskstorage.cosmos.Constants;
 import org.janusgraph.diskstorage.StaticBuffer;
 
 /**
- * ItemBuilder is responsible for translating from StaticBuffers to DynamoDB
- * item maps.
+ * ItemBuilder is responsible for translating from StaticBuffers to DynamoDB item maps.
  *
  * @author Matthew Sowders
- *
  */
 public class ItemBuilder extends AbstractBuilder {
 
-    private static ObjectMapper MAPPER = new ObjectMapper();
+  private static ObjectMapper MAPPER = new ObjectMapper();
 
-    private final ObjectNode item = MAPPER.createObjectNode();
+  private final ObjectNode item = MAPPER.createObjectNode();
 
-    public ItemBuilder partitionKey(final StaticBuffer key) {
-        item.put(Constants.JANUSGRAPH_PARTITION_KEY, encodeKey(key));
-        return this;
-    }
+  public ItemBuilder partitionKey(final StaticBuffer key) {
+    item.put(Constants.JANUSGRAPH_PARTITION_KEY, encodeKey(key));
+    return this;
+  }
 
-    public ItemBuilder columnKey(final StaticBuffer key) {
-        item.put(Constants.JANUSGRAPH_COLUMN_KEY, encodeKey(key));
-        return this;
-    }
+  public ItemBuilder columnKey(final StaticBuffer key) {
+    item.put(Constants.JANUSGRAPH_COLUMN_KEY, encodeKey(key));
+    return this;
+  }
 
-    public ItemBuilder value(final StaticBuffer value) {
-        item.put(Constants.JANUSGRAPH_VALUE, encodeValue(value));
-        return this;
-    }
+  public ItemBuilder value(final StaticBuffer value) {
+    item.put(Constants.JANUSGRAPH_VALUE, encodeValue(value));
+    return this;
+  }
 
-    public ObjectNode build() {
-        return item;
-    }
+  public ObjectNode build() {
+    return item;
+  }
 }

@@ -19,8 +19,8 @@ import org.janusgraph.olap.OLAPTest;
 
 public class CosmosOLAPTest extends OLAPTest {
 
-    @Override
-    public WriteConfiguration getConfiguration() {
-        return CosmosStorageSetup.getCosmosGraphConfiguration();
-    }
+  @Override
+  public WriteConfiguration getConfiguration() {
+    return CosmosStorageSetup.getCosmosGraphConfiguration();
+  }
 }

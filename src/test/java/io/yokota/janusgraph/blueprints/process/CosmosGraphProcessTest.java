@@ -14,12 +14,13 @@
 package io.yokota.janusgraph.blueprints.process;
 
 import io.yokota.janusgraph.blueprints.CosmosGraphProvider;
+import org.apache.tinkerpop.gremlin.GraphProviderClass;
 import org.apache.tinkerpop.gremlin.process.ProcessStandardSuite;
 import org.janusgraph.core.JanusGraph;
-import org.apache.tinkerpop.gremlin.GraphProviderClass;
 import org.junit.runner.RunWith;
 
 @RunWith(ProcessStandardSuite.class)
 @GraphProviderClass(provider = CosmosGraphProvider.class, graph = JanusGraph.class)
 public class CosmosGraphProcessTest {
+
 }

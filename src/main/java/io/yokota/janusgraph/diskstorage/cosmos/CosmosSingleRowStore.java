@@ -20,17 +20,16 @@ import com.azure.cosmos.models.CosmosPatchItemRequestOptions;
 import com.azure.cosmos.models.CosmosPatchOperations;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
-import com.azure.cosmos.util.CosmosPagedFlux;
+import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
-import io.yokota.janusgraph.diskstorage.cosmos.iterator.FluxBackedKeyIterator;
-import io.yokota.janusgraph.diskstorage.cosmos.iterator.SingleRowFluxInterpreter;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
+import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
+import io.yokota.janusgraph.diskstorage.cosmos.iterator.SingleRowStreamInterpreter;
+import io.yokota.janusgraph.diskstorage.cosmos.iterator.StreamBackedKeyIterator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
@@ -43,21 +42,18 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeySliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.StaticArrayEntryList;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 /**
  * Acts as if DynamoDB were a Column Oriented Database by using key as the hash key and each entry
  * has their own column. Note that if you are likely to go over the DynamoDB 400kb per item limit
  * you should use DynamoDbStore.
  * <p>
- * See configuration
- * storage.dynamodb.stores.***store_name***.data-model=SINGLE
+ * See configuration storage.dynamodb.stores.***store_name***.data-model=SINGLE
  * <p>
- * KCV Schema - actual table (Hash(S) only):
- * hk   |  0x02  |  0x04    <-Attribute Names
- * 0x01 |  0x03  |  0x05    <-Row Values
+ * KCV Schema - actual table (Hash(S) only): hk   |  0x02  |  0x04    <-Attribute Names 0x01 |  0x03
+ * |  0x05    <-Row Values
  *
  * @author Matthew Sowders
  * @author Alexander Patrikalakis
@@ -92,92 +88,107 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   @Override
   public KeyIterator getKeys(final SliceQuery query, final StoreTransaction txh)
       throws BackendException {
-    log.debug("==> getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
+    try {
+      log.debug("==> getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query),
+          txh);
 
-    String sql = "SELECT * FROM c";
-    CosmosPagedFlux<ObjectNode> pagedFlux = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
-    // TODO make page size configurable?
-    Flux<ObjectNode> flux = pagedFlux
-        .byPage(100)
-        .flatMap(response -> Flux.fromIterable(response.getResults()));
-    log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
-    return new FluxBackedKeyIterator<>(flux, new SingleRowFluxInterpreter(query));
+      String sql = "SELECT * FROM c";
+      CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(getContainer().queryItems(sql,
+          new CosmosQueryRequestOptions(), ObjectNode.class));
+      // TODO make page size configurable?
+      return new StreamBackedKeyIterator<>(iterable.stream(),
+          new SingleRowStreamInterpreter(query));
+    } finally {
+      log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query),
+          txh);
+    }
   }
 
   @Override
   public EntryList getSlice(final KeySliceQuery query, final StoreTransaction txh)
       throws BackendException {
-    log.debug("==> getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(),
-        encodeForLog(query), txh);
-    String itemId = AbstractBuilder.encodeKey(query.getKey());
-    CosmosItemResponse<ObjectNode> response = getContainer()
-        .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(), ObjectNode.class)
-        .block();
+    EntryList filteredEntries = null;
+    try {
+      log.debug("==> getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(),
+          encodeForLog(query), txh);
+      String itemId = AbstractBuilder.encodeKey(query.getKey());
+      CosmosItemResponse<ObjectNode> response = getContainer()
+          .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
+              ObjectNode.class).block();
 
-    EntryList filteredEntries = extractEntriesFromGetItemResult(
-        response != null ? response.getItem() : null,
-        query.getSliceStart(), query.getSliceEnd(), query.getLimit());
-    log.debug("<== getSliceKeySliceQuery table:{} query:{} txh:{} returning:{}", getContainerName(),
-        encodeForLog(query), txh,
-        filteredEntries.size());
-    return filteredEntries;
+      filteredEntries = extractEntriesFromGetItemResult(
+          response != null ? response.getItem() : null,
+          query.getSliceStart(), query.getSliceEnd(), query.getLimit());
+      return filteredEntries;
+    } finally {
+      log.debug("<== getSliceKeySliceQuery table:{} query:{} txh:{} returning:{}",
+          getContainerName(),
+          encodeForLog(query), txh,
+          filteredEntries != null ? filteredEntries.size() : 0);
+
+    }
   }
 
   @Override
   public Map<StaticBuffer, EntryList> getSlice(final List<StaticBuffer> keys,
       final SliceQuery query, final StoreTransaction txh) throws BackendException {
-    log.debug("==> getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}", getContainerName(),
-        encodeForLog(keys), encodeForLog(query),
-        txh);
-    return Flux.fromIterable(keys)
-        .parallel()
-        .flatMap(key -> {
-          String itemId = AbstractBuilder.encodeKey(key);
-          Mono<CosmosItemResponse<ObjectNode>> mono = getContainer()
-              .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
-                  ObjectNode.class);
-          return Mono.zip(Mono.just(key), mono);
-        })
-        .map(tuple -> tuple.mapT2(response -> extractEntriesFromGetItemResult(
-            response.getItem(),
-            query.getSliceStart(), query.getSliceEnd(), query.getLimit()))
-        )
-        .sequential()
-        .toStream()
-        .collect(Collectors.toMap(Tuple2::getT1, Tuple2::getT2));
+    try {
+      log.debug("==> getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}", getContainerName(),
+          encodeForLog(keys), encodeForLog(query),
+          txh);
+      return keys.stream()
+          .parallel()
+          .map(key -> {
+                String itemId = AbstractBuilder.encodeKey(key);
+                CosmosItemResponse<ObjectNode> response = getContainer()
+                    .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
+                        ObjectNode.class).block();
+                EntryList entryList = extractEntriesFromGetItemResult(
+                    response.getItem(),
+                    query.getSliceStart(), query.getSliceEnd(), query.getLimit());
+                return Tuples.of(key, entryList);
+              }
+          )
+          .collect(Collectors.toMap(Tuple2::getT1, Tuple2::getT2));
+    } finally {
+      log.debug("<== getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}", getContainerName(),
+          encodeForLog(keys), encodeForLog(query),
+          txh);
+    }
   }
 
   @Override
   public void mutate(final StaticBuffer hashKey, final List<Entry> additions,
       final List<StaticBuffer> deletions, final StoreTransaction txh) throws BackendException {
-    log.debug("==> mutate table:{} keys:{} additions:{} deletions:{} txh:{}",
-        getContainerName(),
-        encodeKeyForLog(hashKey),
-        encodeForLog(additions),
-        encodeForLog(deletions),
-        txh);
-    super.mutateOneKey(hashKey, new KCVMutation(additions, deletions), txh);
-
-    log.debug("<== mutate table:{} keys:{} additions:{} deletions:{} txh:{} returning:void",
-        getContainerName(),
-        encodeKeyForLog(hashKey),
-        encodeForLog(additions),
-        encodeForLog(deletions),
-        txh);
+    try {
+      log.debug("==> mutate table:{} keys:{} additions:{} deletions:{} txh:{}",
+          getContainerName(),
+          encodeKeyForLog(hashKey),
+          encodeForLog(additions),
+          encodeForLog(deletions),
+          txh);
+      super.mutateOneKey(hashKey, new KCVMutation(additions, deletions), txh);
+    } finally {
+      log.debug("<== mutate table:{} keys:{} additions:{} deletions:{} txh:{} returning:void",
+          getContainerName(),
+          encodeKeyForLog(hashKey),
+          encodeForLog(additions),
+          encodeForLog(deletions),
+          txh);
+    }
   }
 
   @Override
-  public Stream<Mono<Void>> mutateMany(
+  public void mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
-    return mutations.entrySet().stream()
-        .map(entry -> {
-          String key = AbstractBuilder.encodeKey(entry.getKey());
-          CosmosPatchOperations ops = convertToPatch(entry.getValue());
-          Mono<CosmosItemResponse<ObjectNode>> mono =
-              getContainer().patchItem(key, new PartitionKey(key), ops, new CosmosPatchItemRequestOptions(), ObjectNode.class);
-          return mono.then();
-        });
+    mutations.forEach((k, v) -> {
+      String key = AbstractBuilder.encodeKey(k);
+      CosmosPatchOperations ops = convertToPatch(v);
+      CosmosItemResponse<ObjectNode> response =
+          getContainer().patchItem(key, new PartitionKey(key), ops,
+              new CosmosPatchItemRequestOptions(), ObjectNode.class).block();
+    });
   }
 
   protected CosmosPatchOperations convertToPatch(KCVMutation mutation) {
@@ -191,7 +202,8 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
 
     if (mutation.hasAdditions()) {
       for (Entry e : mutation.getAdditions()) {
-        patch.add(AbstractBuilder.encodeKey(e.getColumn()), AbstractBuilder.encodeValue(e.getValue()));
+        patch.add(AbstractBuilder.encodeKey(e.getColumn()),
+            AbstractBuilder.encodeValue(e.getValue()));
       }
     }
     return patch;

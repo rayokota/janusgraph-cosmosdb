@@ -13,31 +13,34 @@
 
 package io.yokota.janusgraph;
 
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DROP_ON_CLEAR;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_BACKEND;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.buildGraphConfiguration;
+
 import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 import io.yokota.janusgraph.diskstorage.cosmos.Constants;
 import org.janusgraph.StorageSetup;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 
-import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.*;
-
 public class CosmosStorageSetup extends StorageSetup {
 
 
-    public static ModifiableConfiguration getCosmosConfiguration() {
-        return getCosmosConfiguration("janusgraph-test-cosmos");
-    }
+  public static ModifiableConfiguration getCosmosConfiguration() {
+    return getCosmosConfiguration("janusgraph-test-cosmos");
+  }
 
-    public static ModifiableConfiguration getCosmosConfiguration(final String graphName) {
-        return buildGraphConfiguration()
-            .set(STORAGE_BACKEND,"io.yokota.janusgraph.diskstorage.cosmos.CosmosStoreManager")
-            .set(Constants.COSMOS_CLIENT_ENDPOINT, "https://localhost:8081")
-            .set(Constants.COSMOS_CLIENT_KEY, "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==")
-            .set(Constants.STORES_DATA_MODEL, BackendDataModel.MULTI.name(), graphName)
-            .set(DROP_ON_CLEAR, false);
-    }
+  public static ModifiableConfiguration getCosmosConfiguration(final String graphName) {
+    return buildGraphConfiguration()
+        .set(STORAGE_BACKEND, "io.yokota.janusgraph.diskstorage.cosmos.CosmosStoreManager")
+        .set(Constants.COSMOS_CLIENT_ENDPOINT, "https://localhost:8081")
+        .set(Constants.COSMOS_CLIENT_KEY,
+            "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==")
+        .set(Constants.STORES_DATA_MODEL, BackendDataModel.MULTI.name(), graphName)
+        .set(DROP_ON_CLEAR, false);
+  }
 
-    public static WriteConfiguration getCosmosGraphConfiguration() {
-        return getCosmosConfiguration().getConfiguration();
-    }
+  public static WriteConfiguration getCosmosGraphConfiguration() {
+    return getCosmosConfiguration().getConfiguration();
+  }
 }

@@ -17,7 +17,9 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 import com.azure.cosmos.ConsistencyLevel;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncDatabase;
+import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosClientBuilder;
+import com.azure.cosmos.CosmosDatabase;
 import com.azure.cosmos.models.CosmosDatabaseRequestOptions;
 import com.azure.cosmos.models.CosmosDatabaseResponse;
 import com.google.common.base.Preconditions;
@@ -26,7 +28,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
@@ -95,7 +96,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     }
     databaseName = backendConfig.get(Constants.COSMOS_DATABASE);
     prefix = backendConfig.get(Constants.COSMOS_TABLE_PREFIX);
-    factory = new TableNameCosmosStoreFactory(backendConfig);
+    factory = new ContainerNameCosmosStoreFactory(backendConfig);
     features = initializeFeatures(backendConfig);
     createDatabaseIfNotExists();
   }
@@ -107,9 +108,8 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   private void createDatabaseIfNotExists() {
     log.info("Create database " + databaseName + " if not exists.");
 
-    // Create database if not exists
-    Mono<CosmosDatabaseResponse> databaseIfNotExists = client.createDatabaseIfNotExists(
-        databaseName);
+    //  Create database if not exists
+    Mono<CosmosDatabaseResponse> databaseIfNotExists = client.createDatabaseIfNotExists(databaseName);
     databaseIfNotExists.flatMap(databaseResponse -> {
       database = client.getDatabase(databaseResponse.getProperties().getId());
       log.info("Checking database " + database.getId() + " completed!\n");
@@ -134,15 +134,13 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     for (CosmosKeyColumnValueStore store : factory.getAllStores()) {
       store.deleteStore();
     }
-    client.getDatabase(databaseName).delete(new CosmosDatabaseRequestOptions()).block();
+    client.getDatabase(databaseName).delete(new CosmosDatabaseRequestOptions());
     log.debug("<== clearStorage returning:void");
   }
 
   @Override
   public boolean exists() throws BackendException {
-    // TODO
-    //return client.getDelegate().listTables(new ListTablesRequest()) != null;
-    return false;
+    return client.readAllDatabases() != null;
   }
 
   @Override
@@ -192,21 +190,19 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   @Override
   public void mutateMany(final Map<String, Map<StaticBuffer, KCVMutation>> mutations,
       final StoreTransaction txh) throws BackendException {
-    Mono.when(mutations.entrySet().stream()
-        .flatMap(entry -> {
-          try {
-            final CosmosKeyColumnValueStore store = openDatabase(entry.getKey());
-            return store.mutateMany(entry.getValue(), txh);
-          } catch (BackendException e) {
-            throw new RuntimeException(e);
-          }
-        })
-        .collect(Collectors.toList()))
-      .block();
+    mutations.forEach((k, v) -> {
+      try {
+        final CosmosKeyColumnValueStore store = openDatabase(k);
+        store.mutateMany(v, txh);
+      } catch (BackendException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   @Override
-  public CosmosKeyColumnValueStore openDatabase(@NonNull final String name) throws BackendException {
+  public CosmosKeyColumnValueStore openDatabase(@NonNull final String name)
+      throws BackendException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(name),
         "database name may not be null or empty");
     return factory.create(this /*manager*/, prefix, name);

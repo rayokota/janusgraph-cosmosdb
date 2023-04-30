@@ -17,6 +17,9 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.CosmosAsyncDatabase;
+import com.azure.cosmos.CosmosClient;
+import com.azure.cosmos.CosmosContainer;
+import com.azure.cosmos.CosmosDatabase;
 import com.azure.cosmos.models.CosmosContainerProperties;
 import com.azure.cosmos.models.CosmosContainerRequestOptions;
 import com.azure.cosmos.models.CosmosContainerResponse;
@@ -79,12 +82,15 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
   }
 
   @Override
-  public KeySlicesIterator getKeys(MultiSlicesQuery queries, StoreTransaction txh) throws BackendException {
+  public KeySlicesIterator getKeys(MultiSlicesQuery queries, StoreTransaction txh)
+      throws BackendException {
     throw new UnsupportedOperationException();
   }
 
-  protected void mutateOneKey(final StaticBuffer key, final KCVMutation mutation, final StoreTransaction txh) throws BackendException {
-    manager.mutateMany(Collections.singletonMap(name, Collections.singletonMap(key, mutation)), txh);
+  protected void mutateOneKey(final StaticBuffer key, final KCVMutation mutation,
+      final StoreTransaction txh) throws BackendException {
+    manager.mutateMany(Collections.singletonMap(name, Collections.singletonMap(key, mutation)),
+        txh);
   }
 
   @Override
@@ -96,33 +102,36 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
   @Override
   public final void deleteStore() throws BackendException {
     log.debug("==> deleteStore name:{}", name);
-    container.delete(new CosmosContainerRequestOptions()).block();
+    if (container != null) {
+      container.delete(new CosmosContainerRequestOptions());
+    }
   }
 
   private void createContainerIfNotExists() {
     log.info("Create container " + containerName + " if not exists.");
 
     CosmosAsyncDatabase database = manager.getDatabase();
-    // Create container if not exists
+    //  Create container if not exists
     CosmosContainerProperties containerProperties =
         new CosmosContainerProperties(containerName, "/" + Constants.JANUSGRAPH_PARTITION_KEY);
+
     ThroughputProperties throughputProperties = ThroughputProperties.createManualThroughput(400);
     Mono<CosmosContainerResponse> containerIfNotExists =
         database.createContainerIfNotExists(containerProperties, throughputProperties);
 
-    // Create container with 400 RU/s
+    //  Create container with 400 RU/s
     CosmosContainerResponse cosmosContainerResponse = containerIfNotExists.block();
     container = database.getContainer(cosmosContainerResponse.getProperties().getId());
 
     // Modify existing container
     containerProperties = cosmosContainerResponse.getProperties();
-    Mono<CosmosContainerResponse> propertiesReplace = container.replace(containerProperties,
-        new CosmosContainerRequestOptions());
+    Mono<CosmosContainerResponse> propertiesReplace =
+        container.replace(containerProperties, new CosmosContainerRequestOptions());
     propertiesReplace.flatMap(containerResponse -> {
       log.info("setupContainer(): Container " + container.getId() + " in " + database.getId() +
           "has been updated with it's new properties.");
       return Mono.empty();
-    }).onErrorResume(exception -> {
+    }).onErrorResume((exception) -> {
       log.error("setupContainer(): Unable to update properties for container " + container.getId() +
           " in database " + database.getId() +
           ". e: " + exception.getLocalizedMessage());

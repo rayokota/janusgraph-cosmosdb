@@ -14,14 +14,13 @@
 package io.yokota.janusgraph.graphdb.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
-
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.graphdb.JanusGraphPartitionGraphTest;
 
 public class CosmosPartitionGraphTest extends JanusGraphPartitionGraphTest {
 
-    @Override
-    public WriteConfiguration getBaseConfiguration() {
-        return CosmosStorageSetup.getCosmosGraphConfiguration();
-    }
+  @Override
+  public WriteConfiguration getBaseConfiguration() {
+    return CosmosStorageSetup.getCosmosGraphConfiguration();
+  }
 }

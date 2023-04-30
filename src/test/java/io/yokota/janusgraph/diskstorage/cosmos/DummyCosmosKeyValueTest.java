@@ -13,22 +13,26 @@
 
 package io.yokota.janusgraph.diskstorage.cosmos;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import io.yokota.janusgraph.CosmosStorageSetup;
 import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.KeyColumnValueStoreTest;
+import org.janusgraph.diskstorage.Entry;
+import org.janusgraph.diskstorage.KeyValueStoreUtil;
+import org.janusgraph.diskstorage.StaticBuffer;
+import org.janusgraph.diskstorage.keycolumnvalue.KCVSUtil;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyIterator;
+import org.janusgraph.diskstorage.util.RecordIterator;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
-public class CosmosKeyValueTest extends KeyColumnValueStoreTest {
+public class DummyCosmosKeyValueTest extends DummyKeyColumnValueStoreTest {
 
   @Override
   public KeyColumnValueStoreManager openStorageManager() throws BackendException {
     return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
-  }
-
-  // TODO remove
-  @Override
-  public void scanTestWithSimpleJob() throws Exception {
   }
 
   @AfterEach

@@ -20,43 +20,43 @@ import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.util.RecordIterator;
 
 /**
- * Iterator for entries. This implementation is eagerly loaded. A further
- * improvement might be to add a lazily loaded implementation.
+ * Iterator for entries. This implementation is eagerly loaded. A further improvement might be to
+ * add a lazily loaded implementation.
  *
  * @author Matthew Sowders
- *
  */
 public class StaticRecordIterator implements RecordIterator<Entry> {
-    private Iterator<Entry> delegate;
 
-    public StaticRecordIterator(final Iterable<Entry> entries) {
-        this.delegate = entries.iterator();
-    }
+  private Iterator<Entry> delegate;
 
-    @Override
-    public boolean hasNext() {
-        if (null == delegate) {
-            return false;
-        }
-        return delegate.hasNext();
-    }
+  public StaticRecordIterator(final Iterable<Entry> entries) {
+    this.delegate = entries.iterator();
+  }
 
-    @Override
-    public Entry next() {
-        if (null == delegate) {
-            throw new IllegalStateException();
-        }
-        return delegate.next();
+  @Override
+  public boolean hasNext() {
+    if (null == delegate) {
+      return false;
     }
+    return delegate.hasNext();
+  }
 
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
+  @Override
+  public Entry next() {
+    if (null == delegate) {
+      throw new IllegalStateException();
     }
+    return delegate.next();
+  }
 
-    @Override
-    public void close() throws IOException {
-        delegate = null;
-    }
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void close() throws IOException {
+    delegate = null;
+  }
 
 }
