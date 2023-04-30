@@ -14,20 +14,21 @@
  */
 package io.yokota.janusgraph.diskstorage.cosmos.iterator;
 
-import reactor.core.publisher.Flux;
+import java.util.Iterator;
+import java.util.stream.Stream;
 
 /**
  *
  * @author Michael Rodaitis
  *
  */
-public interface FluxContextInterpreter<T> {
+public interface StreamContextInterpreter<T> {
 
     /**
      *
-     * @param flux
+     * @param stream
      * @return
      */
-    Iterable<SingleKeyRecordIterator> buildRecordIterators(Flux<T> flux);
+    Iterator<SingleKeyRecordIterator> buildRecordIterators(Stream<T> stream);
 
 }

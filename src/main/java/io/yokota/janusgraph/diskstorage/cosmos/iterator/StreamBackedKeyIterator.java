@@ -17,11 +17,11 @@ package io.yokota.janusgraph.diskstorage.cosmos.iterator;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.stream.Stream;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyIterator;
 import org.janusgraph.diskstorage.util.RecordIterator;
-import reactor.core.publisher.Flux;
 
 /**
  * KeyIterator that is backed by a DynamoDB scan. This class is ignorant to the fact that
@@ -30,18 +30,18 @@ import reactor.core.publisher.Flux;
  *
  * @author Michael Rodaitis
  */
-public class FluxBackedKeyIterator<T> implements KeyIterator {
+public class StreamBackedKeyIterator<T> implements KeyIterator {
 
-    private final Flux<T> flux;
-    private final FluxContextInterpreter<T> interpreter;
+    private final Stream<T> stream;
+    private final StreamContextInterpreter<T> interpreter;
 
     private SingleKeyRecordIterator current;
     private Iterator<SingleKeyRecordIterator> recordIterators = Collections.emptyIterator();
 
-    public FluxBackedKeyIterator(final Flux<T> flux, final FluxContextInterpreter<T> interpreter) {
-        this.flux = flux;
+    public StreamBackedKeyIterator(final Stream<T> stream, final StreamContextInterpreter<T> interpreter) {
+        this.stream = stream;
         this.interpreter = interpreter;
-        this.recordIterators = interpreter.buildRecordIterators(flux).iterator();
+        this.recordIterators = interpreter.buildRecordIterators(stream);
     }
 
     @Override

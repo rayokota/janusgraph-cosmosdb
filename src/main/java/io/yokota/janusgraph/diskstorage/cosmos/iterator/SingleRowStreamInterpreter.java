@@ -18,13 +18,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.yokota.janusgraph.diskstorage.cosmos.Constants;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.KeyBuilder;
+import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.util.RecordIterator;
-import reactor.core.publisher.Flux;
 
 /**
  * Turns Scan results into RecordIterators for stores using the SINGLE data model.
@@ -34,27 +34,25 @@ import reactor.core.publisher.Flux;
  *
  * @author Michael Rodaitis
  */
-public class SingleRowFluxInterpreter implements FluxContextInterpreter<ObjectNode> {
+public class SingleRowStreamInterpreter implements StreamContextInterpreter<ObjectNode> {
 
     private final SliceQuery sliceQuery;
 
-    public SingleRowFluxInterpreter(final SliceQuery sliceQuery) {
+    public SingleRowStreamInterpreter(final SliceQuery sliceQuery) {
         this.sliceQuery = sliceQuery;
     }
 
     @Override
-    public Iterable<SingleKeyRecordIterator> buildRecordIterators(final Flux<ObjectNode> flux) {
-        return flux.flatMap(item -> {
+    public Iterator<SingleKeyRecordIterator> buildRecordIterators(final Stream<ObjectNode> stream) {
+        return stream.flatMap(item -> {
             final StaticBuffer key = new KeyBuilder(item).build(Constants.JANUSGRAPH_PARTITION_KEY);
             final RecordIterator<Entry> recordIterator = createRecordIterator(item);
             if (recordIterator.hasNext()) {
-                return Flux.just(new SingleKeyRecordIterator(key, recordIterator));
+                return Stream.of(new SingleKeyRecordIterator(key, recordIterator));
             } else {
-                return Flux.empty();
+                return Stream.empty();
             }
-        }).toStream().collect(Collectors.toList());
-        // TODO change? remove?
-        //}).toIterable();
+        }).iterator();
     }
 
     private RecordIterator<Entry> createRecordIterator(final ObjectNode item) {

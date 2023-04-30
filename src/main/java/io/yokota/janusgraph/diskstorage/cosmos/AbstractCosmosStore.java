@@ -14,9 +14,9 @@
  */
 package io.yokota.janusgraph.diskstorage.cosmos;
 
-import com.azure.cosmos.CosmosAsyncClient;
-import com.azure.cosmos.CosmosAsyncContainer;
-import com.azure.cosmos.CosmosAsyncDatabase;
+import com.azure.cosmos.CosmosClient;
+import com.azure.cosmos.CosmosContainer;
+import com.azure.cosmos.CosmosDatabase;
 import com.azure.cosmos.models.CosmosContainerProperties;
 import com.azure.cosmos.models.CosmosContainerRequestOptions;
 import com.azure.cosmos.models.CosmosContainerResponse;
@@ -36,7 +36,6 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeySlicesIterator;
 import org.janusgraph.diskstorage.keycolumnvalue.MultiSlicesQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
-import reactor.core.publisher.Mono;
 
 /**
  * The base class for the SINGLE and MULTI implementations of the Amazon DynamoDB Storage Backend
@@ -48,13 +47,13 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
 
-  protected final CosmosAsyncClient client;
+  protected final CosmosClient client;
   private final String containerName;
   private final CosmosStoreManager manager;
   private final String name;
   // TODO
   private final boolean forceConsistentRead = false;
-  private CosmosAsyncContainer container;
+  private CosmosContainer container;
 
   AbstractCosmosStore(final CosmosStoreManager manager, final String prefix,
       final String storeName) {
@@ -74,7 +73,7 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     return containerName;
   }
 
-  public CosmosAsyncContainer getContainer() {
+  public CosmosContainer getContainer() {
     return container;
   }
 
@@ -96,38 +95,24 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
   @Override
   public final void deleteStore() throws BackendException {
     log.debug("==> deleteStore name:{}", name);
-    container.delete(new CosmosContainerRequestOptions()).block();
+    container.delete(new CosmosContainerRequestOptions());
   }
 
   private void createContainerIfNotExists() {
     log.info("Create container " + containerName + " if not exists.");
 
-    CosmosAsyncDatabase database = manager.getDatabase();
-    // Create container if not exists
+    CosmosDatabase database = manager.getDatabase();
+    //  Create container if not exists
     CosmosContainerProperties containerProperties =
         new CosmosContainerProperties(containerName, "/" + Constants.JANUSGRAPH_PARTITION_KEY);
+
+    //  Create container with 400 RU/s
     ThroughputProperties throughputProperties = ThroughputProperties.createManualThroughput(400);
-    Mono<CosmosContainerResponse> containerIfNotExists =
+    CosmosContainerResponse containerResponse =
         database.createContainerIfNotExists(containerProperties, throughputProperties);
+    container = database.getContainer(containerResponse.getProperties().getId());
 
-    // Create container with 400 RU/s
-    CosmosContainerResponse cosmosContainerResponse = containerIfNotExists.block();
-    container = database.getContainer(cosmosContainerResponse.getProperties().getId());
-
-    // Modify existing container
-    containerProperties = cosmosContainerResponse.getProperties();
-    Mono<CosmosContainerResponse> propertiesReplace = container.replace(containerProperties,
-        new CosmosContainerRequestOptions());
-    propertiesReplace.flatMap(containerResponse -> {
-      log.info("setupContainer(): Container " + container.getId() + " in " + database.getId() +
-          "has been updated with it's new properties.");
-      return Mono.empty();
-    }).onErrorResume(exception -> {
-      log.error("setupContainer(): Unable to update properties for container " + container.getId() +
-          " in database " + database.getId() +
-          ". e: " + exception.getLocalizedMessage());
-      return Mono.empty();
-    }).block();
+    log.info("Checking container " + container.getId() + " completed!\n");
   }
 
   @Override

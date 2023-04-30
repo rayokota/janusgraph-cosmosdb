@@ -201,15 +201,15 @@ public final class Constants {
 
   public static final ConfigOption<Integer> COSMOS_CLIENT_EXECUTOR_CORE_POOL_SIZE =
       new ConfigOption<>(COSMOS_CLIENT_EXECUTOR_NAMESPACE, "core-pool-size",
-          "The core number of threads for the Cosmos DB async client.",
+          "The core number of threads for the Cosmos DB client.",
           LOCAL, 25);
   public static final ConfigOption<Integer> COSMOS_CLIENT_EXECUTOR_MAX_POOL_SIZE =
       new ConfigOption<>(COSMOS_CLIENT_EXECUTOR_NAMESPACE, "max-pool-size",
-          "The maximum allowed number of threads for the Cosmos DB async client.",
+          "The maximum allowed number of threads for the Cosmos DB client.",
           LOCAL, 50);
   public static final ConfigOption<Long> COSMOS_CLIENT_EXECUTOR_KEEP_ALIVE =
       new ConfigOption<>(COSMOS_CLIENT_EXECUTOR_NAMESPACE, "keep-alive",
-          "The time limit for which threads may remain idle before being terminated for the Cosmos DB async client.",
+          "The time limit for which threads may remain idle before being terminated for the Cosmos DB client.",
           LOCAL, 60000L);
 
   public static final ConfigOption<Integer> COSMOS_CLIENT_EXECUTOR_QUEUE_MAX_LENGTH =

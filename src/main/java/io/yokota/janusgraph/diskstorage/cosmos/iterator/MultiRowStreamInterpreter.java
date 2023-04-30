@@ -17,8 +17,10 @@ package io.yokota.janusgraph.diskstorage.cosmos.iterator;
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.decodeKey;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.yokota.janusgraph.diskstorage.cosmos.Constants;
 import io.yokota.janusgraph.diskstorage.cosmos.CosmosStore;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,48 +28,44 @@ import lombok.NonNull;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
-import org.janusgraph.diskstorage.util.RecordIterator;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.GroupedFlux;
-import reactor.core.publisher.Mono;
 
 /**
  * Interprets Scan results for MULTI stores and assumes that results are SEQUENTIAL. This means that the scan is assumed to be non-segmented.
  * We need this assumption because it makes it so we don't need to keep track of where segment boundaries lie in order to avoid returning duplicate
  * hash keys.
  */
-public class MultiRowFluxInterpreter implements FluxContextInterpreter<GroupedFlux<String, ObjectNode>> {
+public class MultiRowStreamInterpreter implements StreamContextInterpreter<List<ObjectNode>> {
 
     @NonNull
     private final CosmosStore store;
     @NonNull
     private final SliceQuery sliceQuery;
 
-    public MultiRowFluxInterpreter(CosmosStore store, SliceQuery sliceQuery) {
+    public MultiRowStreamInterpreter(CosmosStore store, SliceQuery sliceQuery) {
         this.store = store;
         this.sliceQuery = sliceQuery;
     }
 
     @Override
-    public List<SingleKeyRecordIterator> buildRecordIterators(final Flux<GroupedFlux<String, ObjectNode>> flux) {
-        return flux.flatMap(item -> {
-            final StaticBuffer key = decodeKey(item.key());
-            final Mono<StaticRecordIterator> recordIterator = createRecordIterator(item);
-            return recordIterator.map(it -> new SingleKeyRecordIterator(key, it));
-        }).toStream().collect(Collectors.toList());
+    public Iterator<SingleKeyRecordIterator> buildRecordIterators(final Stream<List<ObjectNode>> stream) {
+        return stream.flatMap(items -> {
+            if (items.isEmpty()) {
+                return Stream.empty();
+            }
+            final String partitionKey = items.get(0).get(Constants.JANUSGRAPH_PARTITION_KEY).textValue();
+            final StaticBuffer key = decodeKey(partitionKey);
+            final StaticRecordIterator recordIterator = createRecordIterator(items);
+            return Stream.of(new SingleKeyRecordIterator(key, recordIterator));
+        }).iterator();
     }
 
-    private Mono<StaticRecordIterator> createRecordIterator(final GroupedFlux<String, ObjectNode> flux) {
-        return flux
-            .collectList()
-            .map(items ->
-                new StaticRecordIterator(items.stream().flatMap(item -> {
+    private StaticRecordIterator createRecordIterator(final List<ObjectNode> items) {
+        return new StaticRecordIterator(items.stream().flatMap(item -> {
                     // DynamoDB's between includes the end of the range, but Titan's slice queries expect the end key to be exclusive
                     final Entry entry = new EntryBuilder(item)
                         .slice(sliceQuery.getSliceStart(), sliceQuery.getSliceEnd())
                         .build();
                     return entry != null ? Stream.of(entry) : Stream.empty();
-                }).collect(Collectors.toList()))
-            );
+                }).collect(Collectors.toList()));
     }
 }

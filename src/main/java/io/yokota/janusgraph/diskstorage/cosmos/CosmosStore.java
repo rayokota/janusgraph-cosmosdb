@@ -20,18 +20,19 @@ import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
-import com.azure.cosmos.util.CosmosPagedFlux;
+import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.ItemBuilder;
-import io.yokota.janusgraph.diskstorage.cosmos.iterator.FluxBackedKeyIterator;
-import io.yokota.janusgraph.diskstorage.cosmos.iterator.MultiRowFluxInterpreter;
+import io.yokota.janusgraph.diskstorage.cosmos.iterator.StreamBackedKeyIterator;
+import io.yokota.janusgraph.diskstorage.cosmos.iterator.MultiRowStreamInterpreter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import one.util.streamex.StreamEx;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.EntryList;
@@ -43,10 +44,8 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeySliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.StaticArrayEntryList;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.GroupedFlux;
-import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 /**
  * Acts as if DynamoDB were a Column Oriented Database by using range query when
@@ -84,15 +83,14 @@ public class CosmosStore extends AbstractCosmosStore {
                 encodeForLog(query), txh);
 
             String sql = "SELECT * FROM c";
-            CosmosPagedFlux<ObjectNode> pagedFlux = getContainer().queryItems(sql,
+            CosmosPagedIterable<ObjectNode> iterable = getContainer().queryItems(sql,
                 new CosmosQueryRequestOptions(), ObjectNode.class);
             // TODO make page size configurable?
-            Flux<GroupedFlux<String, ObjectNode>> flux = pagedFlux
-                .byPage(100)
-                .flatMap(response -> Flux.fromIterable(response.getResults()))
-                .groupBy(item -> item.get(Constants.JANUSGRAPH_PARTITION_KEY).textValue());
+            Stream<List<ObjectNode>> grouped = StreamEx.of(iterable.stream())
+                .groupRuns((item1, item2) -> item1.get(Constants.JANUSGRAPH_PARTITION_KEY).textValue()
+                    .equals(item2.get(Constants.JANUSGRAPH_PARTITION_KEY).textValue()));
 
-            return new FluxBackedKeyIterator<>(flux, new MultiRowFluxInterpreter(this, query));
+            return new StreamBackedKeyIterator<>(grouped, new MultiRowStreamInterpreter(this, query));
         } finally {
             log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(),
                 encodeForLog(query), txh);
@@ -110,37 +108,31 @@ public class CosmosStore extends AbstractCosmosStore {
             if (query.hasLimit()) {
                 sliceQuery.setLimit(query.getLimit());
             }
-            Flux<Entry> flux = query(query.getKey(), sliceQuery, txh);
-            // TODO check for NPE
-            List<Entry> entries = flux.toStream().collect(Collectors.toList());
-            return StaticArrayEntryList.of(entries);
-            // TODO remove
-            //return StaticArrayEntryList.of(flux.toIterable());
+            Stream<Entry> entries = query(query.getKey(), sliceQuery, txh);
+            return StaticArrayEntryList.of(entries.collect(Collectors.toList()));
         } finally {
             log.debug("<== getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(),
                 encodeForLog(query), txh);
         }
     }
 
-    private Flux<Entry> query(final StaticBuffer key, SliceQuery query, final StoreTransaction txh) {
+    private Stream<Entry> query(final StaticBuffer key, SliceQuery query, final StoreTransaction txh) {
         String itemId = encodeKey(key);
         String sql = "SELECT * FROM c where c.pk = '" + itemId
             + "' and c.id >= '" + encodeKey(query.getSliceStart())
             + "' and c.id < '" + encodeKey(query.getSliceEnd())
             + "'";
 
-        CosmosPagedFlux<ObjectNode> pagedFlux = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
+        CosmosPagedIterable<ObjectNode> iterable = getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class);
         // TODO make page size configurable?
-        return pagedFlux
-            .byPage(100)
-            .flatMap(response -> Flux.fromIterable(response.getResults()))
+        return iterable.stream()
             .flatMap(item -> {
                 final Entry entry = new EntryBuilder(item)
                     .slice(query.getSliceStart(), query.getSliceEnd())
                     .build();
-                return entry != null ? Flux.just(entry) : Flux.empty();
+                return entry != null ? Stream.of(entry) : Stream.empty();
             })
-            .take(query.getLimit());
+            .limit(query.getLimit());
     }
 
     @Override
@@ -152,12 +144,13 @@ public class CosmosStore extends AbstractCosmosStore {
                 encodeForLog(query),
                 txh);
 
-            return Flux.fromIterable(keys)
+            return keys.stream()
                 .parallel()
-                .flatMap(key -> Mono.zip(Mono.just(key), query(key, query, txh).collectList()))
-                .sequential()
-                .toStream()
-                .collect(Collectors.toMap(Tuple2::getT1, tuple -> StaticArrayEntryList.of(tuple.getT2())));
+                .map(key -> Tuples.of(key, query(key, query, txh)))
+                .collect(Collectors.toMap(
+                    Tuple2::getT1,
+                    tuple -> StaticArrayEntryList.of(tuple.getT2().collect(Collectors.toList())))
+                );
         } finally {
             log.debug("<== getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}",
                 getContainerName(),
@@ -189,22 +182,18 @@ public class CosmosStore extends AbstractCosmosStore {
     }
 
     @Override
-    public Stream<Mono<Void>> mutateMany(
+    public void mutateMany(
         final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
         throws BackendException {
-        return mutations.entrySet().stream()
-            .flatMap(entry -> mutate(entry.getKey(), entry.getValue())
-                .stream()
-                .map(Mono::then)
-            );
+        mutations.forEach(this::mutate);
     }
 
-    protected List<Mono<CosmosItemResponse<Object>>> mutate(StaticBuffer partitionKey, KCVMutation mutation) {
-        List<Mono<CosmosItemResponse<Object>>> responses = new ArrayList<>();
+    protected List<CosmosItemResponse<Object>> mutate(StaticBuffer partitionKey, KCVMutation mutation) {
+        List<CosmosItemResponse<Object>> responses = new ArrayList<>();
 
         if (mutation.hasDeletions()) {
             for (StaticBuffer b : mutation.getDeletions()) {
-                Mono<CosmosItemResponse<Object>> response = getContainer().deleteItem(encodeKey(b), new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions());
+                CosmosItemResponse<Object> response = getContainer().deleteItem(encodeKey(b), new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions());
                 responses.add(response);
             }
         }
@@ -216,7 +205,7 @@ public class CosmosStore extends AbstractCosmosStore {
                     .columnKey(e.getColumn())
                     .value(e.getValue())
                     .build();
-                Mono<CosmosItemResponse<Object>> response = getContainer().upsertItem(item, new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions());
+                CosmosItemResponse<Object> response = getContainer().upsertItem(item, new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions());
                 responses.add(response);
             }
         }

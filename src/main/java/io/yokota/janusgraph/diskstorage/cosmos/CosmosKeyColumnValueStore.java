@@ -24,7 +24,6 @@ import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.KCVMutation;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
-import reactor.core.publisher.Mono;
 
 /**
  * Responsible for communicating with a single AWS backing store table.
@@ -57,7 +56,7 @@ public interface CosmosKeyColumnValueStore extends KeyColumnValueStore {
    */
   String getContainerName();
 
-  Stream<Mono<Void>> mutateMany(
+  void mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException;
 }
