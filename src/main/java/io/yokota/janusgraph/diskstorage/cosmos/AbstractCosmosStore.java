@@ -14,6 +14,9 @@
  */
 package io.yokota.janusgraph.diskstorage.cosmos;
 
+import com.azure.cosmos.CosmosAsyncClient;
+import com.azure.cosmos.CosmosAsyncContainer;
+import com.azure.cosmos.CosmosAsyncDatabase;
 import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosContainer;
 import com.azure.cosmos.CosmosDatabase;
@@ -36,6 +39,7 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeySlicesIterator;
 import org.janusgraph.diskstorage.keycolumnvalue.MultiSlicesQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
+import reactor.core.publisher.Mono;
 
 /**
  * The base class for the SINGLE and MULTI implementations of the Amazon DynamoDB Storage Backend
@@ -47,13 +51,13 @@ import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 @Slf4j
 public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
 
-  protected final CosmosClient client;
+  protected final CosmosAsyncClient client;
   private final String containerName;
   private final CosmosStoreManager manager;
   private final String name;
   // TODO
   private final boolean forceConsistentRead = false;
-  private CosmosContainer container;
+  private CosmosAsyncContainer container;
 
   AbstractCosmosStore(final CosmosStoreManager manager, final String prefix,
       final String storeName) {
@@ -73,7 +77,7 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     return containerName;
   }
 
-  public CosmosContainer getContainer() {
+  public CosmosAsyncContainer getContainer() {
     return container;
   }
 
@@ -106,18 +110,33 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
   private void createContainerIfNotExists() {
     log.info("Create container " + containerName + " if not exists.");
 
-    CosmosDatabase database = manager.getDatabase();
+    CosmosAsyncDatabase database = manager.getDatabase();
     //  Create container if not exists
     CosmosContainerProperties containerProperties =
         new CosmosContainerProperties(containerName, "/" + Constants.JANUSGRAPH_PARTITION_KEY);
 
-    //  Create container with 400 RU/s
     ThroughputProperties throughputProperties = ThroughputProperties.createManualThroughput(400);
-    CosmosContainerResponse containerResponse =
+    Mono<CosmosContainerResponse> containerIfNotExists =
         database.createContainerIfNotExists(containerProperties, throughputProperties);
-    container = database.getContainer(containerResponse.getProperties().getId());
 
-    log.info("Checking container " + container.getId() + " completed!\n");
+    //  Create container with 400 RU/s
+    CosmosContainerResponse cosmosContainerResponse = containerIfNotExists.block();
+    container = database.getContainer(cosmosContainerResponse.getProperties().getId());
+
+    // Modify existing container
+    containerProperties = cosmosContainerResponse.getProperties();
+    Mono<CosmosContainerResponse> propertiesReplace =
+        container.replace(containerProperties, new CosmosContainerRequestOptions());
+    propertiesReplace.flatMap(containerResponse -> {
+      log.info("setupContainer(): Container " + container.getId() + " in " + database.getId() +
+          "has been updated with it's new properties.");
+      return Mono.empty();
+    }).onErrorResume((exception) -> {
+      log.error("setupContainer(): Unable to update properties for container " + container.getId() +
+          " in database " + database.getId() +
+          ". e: " + exception.getLocalizedMessage());
+      return Mono.empty();
+    }).block();
   }
 
   @Override

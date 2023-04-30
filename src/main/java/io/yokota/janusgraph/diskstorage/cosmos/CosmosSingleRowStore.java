@@ -93,8 +93,8 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
           txh);
 
       String sql = "SELECT * FROM c";
-      CosmosPagedIterable<ObjectNode> iterable = getContainer().queryItems(sql,
-          new CosmosQueryRequestOptions(), ObjectNode.class);
+      CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(getContainer().queryItems(sql,
+          new CosmosQueryRequestOptions(), ObjectNode.class));
       // TODO make page size configurable?
       return new StreamBackedKeyIterator<>(iterable.stream(),
           new SingleRowStreamInterpreter(query));
@@ -114,7 +114,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       String itemId = AbstractBuilder.encodeKey(query.getKey());
       CosmosItemResponse<ObjectNode> response = getContainer()
           .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
-              ObjectNode.class);
+              ObjectNode.class).block();
 
       filteredEntries = extractEntriesFromGetItemResult(
           response != null ? response.getItem() : null,
@@ -142,7 +142,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
                 String itemId = AbstractBuilder.encodeKey(key);
                 CosmosItemResponse<ObjectNode> response = getContainer()
                     .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
-                        ObjectNode.class);
+                        ObjectNode.class).block();
                 EntryList entryList = extractEntriesFromGetItemResult(
                     response.getItem(),
                     query.getSliceStart(), query.getSliceEnd(), query.getLimit());
@@ -187,7 +187,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       CosmosPatchOperations ops = convertToPatch(v);
       CosmosItemResponse<ObjectNode> response =
           getContainer().patchItem(key, new PartitionKey(key), ops,
-              new CosmosPatchItemRequestOptions(), ObjectNode.class);
+              new CosmosPatchItemRequestOptions(), ObjectNode.class).block();
     });
   }
 

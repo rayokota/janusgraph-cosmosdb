@@ -15,6 +15,8 @@
 package io.yokota.janusgraph.diskstorage.cosmos;
 
 import com.azure.cosmos.ConsistencyLevel;
+import com.azure.cosmos.CosmosAsyncClient;
+import com.azure.cosmos.CosmosAsyncDatabase;
 import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.cosmos.CosmosDatabase;
@@ -43,6 +45,7 @@ import org.janusgraph.diskstorage.keycolumnvalue.StandardStoreFeatures.Builder;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreFeatures;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.time.TimestampProviders;
+import reactor.core.publisher.Mono;
 
 /**
  * The JanusGraph manager for the Azure Cosmos DB Storage Backend for JanusGraph.
@@ -52,12 +55,12 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     KeyColumnValueStoreManager {
 
   private static final int DEFAULT_PORT = 8081;
-  CosmosClient client;
+  CosmosAsyncClient client;
   private final CosmosStoreFactory factory;
   private final StoreFeatures features;
   private final String databaseName;
   private final String prefix;
-  private CosmosDatabase database;
+  private CosmosAsyncDatabase database;
 
   private static int getPort(final Configuration config) throws BackendException {
     final String endpoint = JanusGraphConfigUtil.getNullableConfigValue(config,
@@ -87,7 +90,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
           //.preferredRegions(preferredRegions)
           .contentResponseOnWriteEnabled(true)
           .consistencyLevel(ConsistencyLevel.SESSION)
-          .buildClient();
+          .buildAsyncClient();
     } catch (IllegalArgumentException e) {
       throw new PermanentBackendException("Bad configuration used: " + backendConfig, e);
     }
@@ -98,7 +101,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     createDatabaseIfNotExists();
   }
 
-  public CosmosDatabase getDatabase() {
+  public CosmosAsyncDatabase getDatabase() {
     return database;
   }
 
@@ -106,13 +109,15 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     log.info("Create database " + databaseName + " if not exists.");
 
     //  Create database if not exists
-    CosmosDatabaseResponse databaseResponse = client.createDatabaseIfNotExists(databaseName);
-    database = client.getDatabase(databaseResponse.getProperties().getId());
-
-    log.info("Checking database " + database.getId() + " completed!\n");
+    Mono<CosmosDatabaseResponse> databaseIfNotExists = client.createDatabaseIfNotExists(databaseName);
+    databaseIfNotExists.flatMap(databaseResponse -> {
+      database = client.getDatabase(databaseResponse.getProperties().getId());
+      log.info("Checking database " + database.getId() + " completed!\n");
+      return Mono.empty();
+    }).block();
   }
 
-  public CosmosClient getClient() {
+  public CosmosAsyncClient getClient() {
     return client;
   }
 

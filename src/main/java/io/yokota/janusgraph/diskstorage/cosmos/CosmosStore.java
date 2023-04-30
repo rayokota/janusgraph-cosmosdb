@@ -83,8 +83,8 @@ public class CosmosStore extends AbstractCosmosStore {
       String sql = "SELECT * FROM c where c.id >= '" + encodeKey(query.getSliceStart())
           + "' and c.id < '" + encodeKey(query.getSliceEnd())
           + "'";
-      CosmosPagedIterable<ObjectNode> iterable = getContainer().queryItems(sql,
-          new CosmosQueryRequestOptions(), ObjectNode.class);
+      CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(getContainer().queryItems(sql,
+          new CosmosQueryRequestOptions(), ObjectNode.class));
       // TODO make page size configurable?
       Stream<List<ObjectNode>> grouped = StreamEx.of(iterable.stream())
           .groupRuns((item1, item2) -> item1.get(Constants.JANUSGRAPH_PARTITION_KEY).textValue()
@@ -124,8 +124,8 @@ public class CosmosStore extends AbstractCosmosStore {
         + "' and c.id < '" + encodeKey(query.getSliceEnd())
         + "'";
 
-    CosmosPagedIterable<ObjectNode> iterable = getContainer().queryItems(sql,
-        new CosmosQueryRequestOptions(), ObjectNode.class);
+    CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(getContainer().queryItems(sql,
+        new CosmosQueryRequestOptions(), ObjectNode.class));
     // TODO make page size configurable?
     return iterable.stream()
         .flatMap(item -> {
@@ -199,7 +199,7 @@ public class CosmosStore extends AbstractCosmosStore {
     if (mutation.hasDeletions()) {
       for (StaticBuffer b : mutation.getDeletions()) {
         CosmosItemResponse<Object> response = getContainer().deleteItem(encodeKey(b),
-            new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions());
+            new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions()).block();
         responses.add(response);
       }
     }
@@ -211,9 +211,9 @@ public class CosmosStore extends AbstractCosmosStore {
             .columnKey(e.getColumn())
             .value(e.getValue())
             .build();
-        CosmosItemResponse<Object> response = getContainer().upsertItem(item,
-            new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions());
-        responses.add(response);
+        CosmosItemResponse<ObjectNode> response = getContainer().upsertItem(item,
+            new PartitionKey(encodeKey(partitionKey)), new CosmosItemRequestOptions()).block();
+        //responses.add(response);
       }
     }
     return responses;
