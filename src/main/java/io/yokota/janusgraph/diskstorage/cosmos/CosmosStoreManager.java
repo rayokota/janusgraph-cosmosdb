@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
@@ -94,7 +93,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     }
     databaseName = backendConfig.get(Constants.COSMOS_DATABASE);
     prefix = backendConfig.get(Constants.COSMOS_TABLE_PREFIX);
-    factory = new TableNameCosmosStoreFactory(backendConfig);
+    factory = new ContainerNameCosmosStoreFactory(backendConfig);
     features = initializeFeatures(backendConfig);
     createDatabaseIfNotExists();
   }

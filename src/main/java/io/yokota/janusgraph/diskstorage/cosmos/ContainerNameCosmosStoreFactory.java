@@ -27,14 +27,14 @@ import org.janusgraph.diskstorage.configuration.Configuration;
  * @author Alexander Patrikalakis
  */
 @Slf4j
-public class TableNameCosmosStoreFactory implements CosmosStoreFactory {
+public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
 
 
 
   private final Configuration config;
   private final ConcurrentMap<String, CosmosKeyColumnValueStore> stores = new ConcurrentHashMap<>();
 
-  public TableNameCosmosStoreFactory(Configuration config) {
+  public ContainerNameCosmosStoreFactory(Configuration config) {
     this.config = config;
   }
 
