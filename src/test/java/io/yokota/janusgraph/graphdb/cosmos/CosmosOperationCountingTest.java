@@ -21,19 +21,19 @@ import org.junit.jupiter.api.Test;
 
 public class CosmosOperationCountingTest extends JanusGraphOperationCountingTest {
 
-    @Override
-    public WriteConfiguration getBaseConfiguration() {
-        return CosmosStorageSetup.getCosmosGraphConfiguration();
-    }
+  @Override
+  public WriteConfiguration getBaseConfiguration() {
+    return CosmosStorageSetup.getCosmosGraphConfiguration();
+  }
 
-    @AfterEach
-    public void resetCounts() {
-        resetMetrics(); // Metrics is a singleton, so subsequents test runs have wrong counts if we don't clean up.
-    }
+  @AfterEach
+  public void resetCounts() {
+    resetMetrics(); // Metrics is a singleton, so subsequents test runs have wrong counts if we don't clean up.
+  }
 
-    @Test
-    @Override
-    public void testCacheSpeedup() {
-        // Ignore this test as cache speedup is a little less than double as asserted in superclass test
-    }
+  @Test
+  @Override
+  public void testCacheSpeedup() {
+    // Ignore this test as cache speedup is a little less than double as asserted in superclass test
+  }
 }

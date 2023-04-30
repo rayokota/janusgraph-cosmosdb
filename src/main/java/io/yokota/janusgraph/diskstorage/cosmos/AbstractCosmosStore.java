@@ -78,12 +78,15 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
   }
 
   @Override
-  public KeySlicesIterator getKeys(MultiSlicesQuery queries, StoreTransaction txh) throws BackendException {
+  public KeySlicesIterator getKeys(MultiSlicesQuery queries, StoreTransaction txh)
+      throws BackendException {
     throw new UnsupportedOperationException();
   }
 
-  protected void mutateOneKey(final StaticBuffer key, final KCVMutation mutation, final StoreTransaction txh) throws BackendException {
-    manager.mutateMany(Collections.singletonMap(name, Collections.singletonMap(key, mutation)), txh);
+  protected void mutateOneKey(final StaticBuffer key, final KCVMutation mutation,
+      final StoreTransaction txh) throws BackendException {
+    manager.mutateMany(Collections.singletonMap(name, Collections.singletonMap(key, mutation)),
+        txh);
   }
 
   @Override

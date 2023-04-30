@@ -15,27 +15,26 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
 import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.KeyColumnValueStoreTest;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.junit.jupiter.api.AfterEach;
 
 public class DummyCosmosKeyValueTest extends DummyKeyColumnValueStoreTest {
 
-    @Override
-    public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-        return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
-    }
+  @Override
+  public KeyColumnValueStoreManager openStorageManager() throws BackendException {
+    return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
+  }
 
-    // TODO remove
-    @Override
-    public void scanTestWithSimpleJob() throws Exception {
-    }
+  // TODO remove
+  @Override
+  public void scanTestWithSimpleJob() throws Exception {
+  }
 
-    @AfterEach
-    public void tearDown() throws Exception {
-        if (null != this.manager) {
-            this.manager.clearStorage();
-        }
-        super.tearDown();
+  @AfterEach
+  public void tearDown() throws Exception {
+    if (null != this.manager) {
+      this.manager.clearStorage();
     }
+    super.tearDown();
+  }
 }

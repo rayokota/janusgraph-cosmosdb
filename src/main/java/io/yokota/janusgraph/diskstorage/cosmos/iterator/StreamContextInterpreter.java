@@ -18,17 +18,14 @@ import java.util.Iterator;
 import java.util.stream.Stream;
 
 /**
- *
  * @author Michael Rodaitis
- *
  */
 public interface StreamContextInterpreter<T> {
 
-    /**
-     *
-     * @param stream
-     * @return
-     */
-    Iterator<SingleKeyRecordIterator> buildRecordIterators(Stream<T> stream);
+  /**
+   * @param stream
+   * @return
+   */
+  Iterator<SingleKeyRecordIterator> buildRecordIterators(Stream<T> stream);
 
 }

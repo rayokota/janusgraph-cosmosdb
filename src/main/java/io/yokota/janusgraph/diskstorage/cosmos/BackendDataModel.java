@@ -21,26 +21,28 @@ import lombok.RequiredArgsConstructor;
  * Creates a store backend based on configuration.
  *
  * @author Matthew Sowders
- *
  */
 @RequiredArgsConstructor
 public enum BackendDataModel {
-    SINGLE("Single") {
-        @Override
-        public CosmosKeyColumnValueStore createStoreBackend(final CosmosStoreManager manager, final String prefix, final String name) {
-            return new CosmosSingleRowStore(manager, prefix, name);
-        }
-    },
-    MULTI("Multiple") {
-        @Override
-        public CosmosKeyColumnValueStore createStoreBackend(final CosmosStoreManager manager, final String prefix, final String name) {
-            return new CosmosStore(manager, prefix, name);
-        }
-    };
+  SINGLE("Single") {
+    @Override
+    public CosmosKeyColumnValueStore createStoreBackend(final CosmosStoreManager manager,
+        final String prefix, final String name) {
+      return new CosmosSingleRowStore(manager, prefix, name);
+    }
+  },
+  MULTI("Multiple") {
+    @Override
+    public CosmosKeyColumnValueStore createStoreBackend(final CosmosStoreManager manager,
+        final String prefix, final String name) {
+      return new CosmosStore(manager, prefix, name);
+    }
+  };
 
-    @Getter
-    private final String camelCaseName;
+  @Getter
+  private final String camelCaseName;
 
-    public abstract CosmosKeyColumnValueStore createStoreBackend(CosmosStoreManager manager, String prefix, String name);
+  public abstract CosmosKeyColumnValueStore createStoreBackend(CosmosStoreManager manager,
+      String prefix, String name);
 
 }

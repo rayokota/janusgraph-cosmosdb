@@ -24,49 +24,50 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeyIterator;
 import org.janusgraph.diskstorage.util.RecordIterator;
 
 /**
- * KeyIterator that is backed by a DynamoDB scan. This class is ignorant to the fact that
- * its backing scan might be running in parallel. The ScanContextInterpreter is expected to
- * be compatible with whatever scan order the scanner is using.
+ * KeyIterator that is backed by a DynamoDB scan. This class is ignorant to the fact that its
+ * backing scan might be running in parallel. The ScanContextInterpreter is expected to be
+ * compatible with whatever scan order the scanner is using.
  *
  * @author Michael Rodaitis
  */
 public class StreamBackedKeyIterator<T> implements KeyIterator {
 
-    private final Stream<T> stream;
-    private final StreamContextInterpreter<T> interpreter;
+  private final Stream<T> stream;
+  private final StreamContextInterpreter<T> interpreter;
 
-    private SingleKeyRecordIterator current;
-    private Iterator<SingleKeyRecordIterator> recordIterators = Collections.emptyIterator();
+  private SingleKeyRecordIterator current;
+  private Iterator<SingleKeyRecordIterator> recordIterators = Collections.emptyIterator();
 
-    public StreamBackedKeyIterator(final Stream<T> stream, final StreamContextInterpreter<T> interpreter) {
-        this.stream = stream;
-        this.interpreter = interpreter;
-        this.recordIterators = interpreter.buildRecordIterators(stream);
-    }
+  public StreamBackedKeyIterator(final Stream<T> stream,
+      final StreamContextInterpreter<T> interpreter) {
+    this.stream = stream;
+    this.interpreter = interpreter;
+    this.recordIterators = interpreter.buildRecordIterators(stream);
+  }
 
-    @Override
-    public RecordIterator<Entry> getEntries() {
-        return current.getRecordIterator();
-    }
+  @Override
+  public RecordIterator<Entry> getEntries() {
+    return current.getRecordIterator();
+  }
 
-    @Override
-    public void close() throws IOException {
-        recordIterators = Collections.emptyIterator();
-    }
+  @Override
+  public void close() throws IOException {
+    recordIterators = Collections.emptyIterator();
+  }
 
-    @Override
-    public boolean hasNext() {
-        return recordIterators.hasNext();
-    }
+  @Override
+  public boolean hasNext() {
+    return recordIterators.hasNext();
+  }
 
-    @Override
-    public StaticBuffer next() {
-        current = recordIterators.next();
-        return current.getKey();
-    }
+  @Override
+  public StaticBuffer next() {
+    current = recordIterators.next();
+    return current.getKey();
+  }
 
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException("remove");
-    }
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException("remove");
+  }
 }

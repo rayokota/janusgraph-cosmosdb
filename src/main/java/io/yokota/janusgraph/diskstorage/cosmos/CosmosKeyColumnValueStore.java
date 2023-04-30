@@ -14,11 +14,7 @@
  */
 package io.yokota.janusgraph.diskstorage.cosmos;
 
-import com.azure.cosmos.models.CosmosItemResponse;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.KCVMutation;

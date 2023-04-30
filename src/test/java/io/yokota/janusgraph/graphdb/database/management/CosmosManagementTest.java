@@ -19,8 +19,8 @@ import org.janusgraph.graphdb.database.management.ManagementTest;
 
 public class CosmosManagementTest extends ManagementTest {
 
-    @Override
-    public WriteConfiguration getConfiguration() {
-        return CosmosStorageSetup.getCosmosGraphConfiguration();
-    }
+  @Override
+  public WriteConfiguration getConfiguration() {
+    return CosmosStorageSetup.getCosmosGraphConfiguration();
+  }
 }

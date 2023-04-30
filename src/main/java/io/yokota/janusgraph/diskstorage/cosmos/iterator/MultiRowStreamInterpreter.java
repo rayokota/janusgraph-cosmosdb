@@ -30,48 +30,51 @@ import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 
 /**
- * Interprets Scan results for MULTI stores and assumes that results are SEQUENTIAL. This means that the scan is assumed to be non-segmented.
- * We need this assumption because it makes it so we don't need to keep track of where segment boundaries lie in order to avoid returning duplicate
- * hash keys.
+ * Interprets Scan results for MULTI stores and assumes that results are SEQUENTIAL. This means that
+ * the scan is assumed to be non-segmented. We need this assumption because it makes it so we don't
+ * need to keep track of where segment boundaries lie in order to avoid returning duplicate hash
+ * keys.
  */
 public class MultiRowStreamInterpreter implements StreamContextInterpreter<List<ObjectNode>> {
 
-    @NonNull
-    private final CosmosStore store;
-    @NonNull
-    private final SliceQuery sliceQuery;
+  @NonNull
+  private final CosmosStore store;
+  @NonNull
+  private final SliceQuery sliceQuery;
 
-    public MultiRowStreamInterpreter(CosmosStore store, SliceQuery sliceQuery) {
-        this.store = store;
-        this.sliceQuery = sliceQuery;
-    }
+  public MultiRowStreamInterpreter(CosmosStore store, SliceQuery sliceQuery) {
+    this.store = store;
+    this.sliceQuery = sliceQuery;
+  }
 
-    @Override
-    public Iterator<SingleKeyRecordIterator> buildRecordIterators(final Stream<List<ObjectNode>> stream) {
-        return stream.flatMap(items -> {
-            if (items.isEmpty()) {
-                return Stream.empty();
-            }
-            final String partitionKey = items.get(0).get(Constants.JANUSGRAPH_PARTITION_KEY).textValue();
-            final StaticBuffer key = decodeKey(partitionKey);
-            final StaticRecordIterator recordIterator = createRecordIterator(items);
-            return Stream.of(new SingleKeyRecordIterator(key, recordIterator));
+  @Override
+  public Iterator<SingleKeyRecordIterator> buildRecordIterators(
+      final Stream<List<ObjectNode>> stream) {
+    return stream.flatMap(items -> {
+      if (items.isEmpty()) {
+        return Stream.empty();
+      }
+      final String partitionKey = items.get(0).get(Constants.JANUSGRAPH_PARTITION_KEY).textValue();
+      final StaticBuffer key = decodeKey(partitionKey);
+      final StaticRecordIterator recordIterator = createRecordIterator(items);
+      return Stream.of(new SingleKeyRecordIterator(key, recordIterator));
             /*
             return recordIterator.hasNext()
                 ? Stream.of(new SingleKeyRecordIterator(key, recordIterator))
                 : Stream.empty();
 
              */
-        }).iterator();
-    }
+    }).iterator();
+  }
 
-    private StaticRecordIterator createRecordIterator(final List<ObjectNode> items) {
-        return new StaticRecordIterator(items.stream().flatMap(item -> {
-                    // DynamoDB's between includes the end of the range, but Titan's slice queries expect the end key to be exclusive
-                    final Entry entry = new EntryBuilder(item)
-                        .slice(sliceQuery.getSliceStart(), sliceQuery.getSliceEnd())
-                        .build();
-                    return entry != null ? Stream.of(entry) : Stream.empty();
-                }).collect(Collectors.toList()));
-    }
+  private StaticRecordIterator createRecordIterator(final List<ObjectNode> items) {
+    return new StaticRecordIterator(items.stream()
+        .flatMap(item -> {
+          // DynamoDB's between includes the end of the range, but Titan's slice queries expect the end key to be exclusive
+          final Entry entry = new EntryBuilder(item)
+              .slice(sliceQuery.getSliceStart(), sliceQuery.getSliceEnd())
+              .build();
+          return entry != null ? Stream.of(entry) : Stream.empty();
+        }).collect(Collectors.toList()));
+  }
 }

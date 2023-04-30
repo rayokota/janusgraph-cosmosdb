@@ -22,32 +22,33 @@ import org.junit.jupiter.api.Test;
 
 public class CosmosVariableLengthKCVSTest extends KeyColumnValueStoreTest {
 
-    public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-        return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
+  public KeyColumnValueStoreManager openStorageManager() throws BackendException {
+    return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
+  }
+
+  @AfterEach
+  public void tearDown() throws Exception {
+    if (null != this.manager) {
+      this.manager.clearStorage();
     }
+    super.tearDown();
+  }
 
-    @AfterEach
-    public void tearDown() throws Exception {
-        if (null != this.manager) {
-            this.manager.clearStorage();
-        }
-        super.tearDown();
-    }
+  @Test
+  @Override
+  public void testClearStorage() {
 
-    @Test
-    @Override
-    public void testClearStorage() {
+  }
 
-    }
+  @Test
+  @Override
+  public void testConcurrentGetSlice() {
 
-    @Test
-    @Override
-    public void testConcurrentGetSlice() {
+  }
 
-    }
+  @Test
+  @Override
+  public void testConcurrentGetSliceAndMutate() {
 
-    @Test @Override
-    public void testConcurrentGetSliceAndMutate() {
-
-    }
+  }
 }

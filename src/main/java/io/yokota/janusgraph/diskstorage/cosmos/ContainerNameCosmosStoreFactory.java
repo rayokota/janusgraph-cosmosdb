@@ -30,7 +30,6 @@ import org.janusgraph.diskstorage.configuration.Configuration;
 public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
 
 
-
   private final Configuration config;
   private final ConcurrentMap<String, CosmosKeyColumnValueStore> stores = new ConcurrentHashMap<>();
 
@@ -44,7 +43,8 @@ public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
     log.debug("==> TableNameDynamoDbStoreFactory.create prefix:{} name:{}", prefix, name);
     // ensure there is only one instance used per table name.
 
-    BackendDataModel model = BackendDataModel.valueOf(config.get(Constants.STORES_DATA_MODEL, name));
+    BackendDataModel model = BackendDataModel.valueOf(
+        config.get(Constants.STORES_DATA_MODEL, name));
     final CosmosKeyColumnValueStore storeBackend = model.createStoreBackend(manager, prefix, name);
     final CosmosKeyColumnValueStore previous = stores.putIfAbsent(name, storeBackend);
     if (null == previous) {

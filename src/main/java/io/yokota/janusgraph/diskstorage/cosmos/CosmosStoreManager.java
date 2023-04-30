@@ -188,17 +188,18 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   public void mutateMany(final Map<String, Map<StaticBuffer, KCVMutation>> mutations,
       final StoreTransaction txh) throws BackendException {
     mutations.forEach((k, v) -> {
-          try {
-            final CosmosKeyColumnValueStore store = openDatabase(k);
-            store.mutateMany(v, txh);
-          } catch (BackendException e) {
-            throw new RuntimeException(e);
-          }
-        });
+      try {
+        final CosmosKeyColumnValueStore store = openDatabase(k);
+        store.mutateMany(v, txh);
+      } catch (BackendException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   @Override
-  public CosmosKeyColumnValueStore openDatabase(@NonNull final String name) throws BackendException {
+  public CosmosKeyColumnValueStore openDatabase(@NonNull final String name)
+      throws BackendException {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(name),
         "database name may not be null or empty");
     return factory.create(this /*manager*/, prefix, name);

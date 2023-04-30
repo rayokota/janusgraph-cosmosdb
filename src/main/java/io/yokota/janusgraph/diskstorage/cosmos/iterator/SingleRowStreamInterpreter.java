@@ -27,40 +27,40 @@ import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.util.RecordIterator;
 
 /**
- * Turns Scan results into RecordIterators for stores using the SINGLE data model.
- * This interpreter doesn't need to consider whether or not a scan is segmented,
- * because each item in a ScanResult represents ALL columns for a given key. It is impossible for
- * keys to be split across multiple ScanResults (or segments for that matter) when using the SINGLE data model.
+ * Turns Scan results into RecordIterators for stores using the SINGLE data model. This interpreter
+ * doesn't need to consider whether or not a scan is segmented, because each item in a ScanResult
+ * represents ALL columns for a given key. It is impossible for keys to be split across multiple
+ * ScanResults (or segments for that matter) when using the SINGLE data model.
  *
  * @author Michael Rodaitis
  */
 public class SingleRowStreamInterpreter implements StreamContextInterpreter<ObjectNode> {
 
-    private final SliceQuery sliceQuery;
+  private final SliceQuery sliceQuery;
 
-    public SingleRowStreamInterpreter(final SliceQuery sliceQuery) {
-        this.sliceQuery = sliceQuery;
-    }
+  public SingleRowStreamInterpreter(final SliceQuery sliceQuery) {
+    this.sliceQuery = sliceQuery;
+  }
 
-    @Override
-    public Iterator<SingleKeyRecordIterator> buildRecordIterators(final Stream<ObjectNode> stream) {
-        return stream.flatMap(item -> {
-            final StaticBuffer key = new KeyBuilder(item).build(Constants.JANUSGRAPH_PARTITION_KEY);
-            final RecordIterator<Entry> recordIterator = createRecordIterator(item);
-            if (recordIterator.hasNext()) {
-                return Stream.of(new SingleKeyRecordIterator(key, recordIterator));
-            } else {
-                return Stream.empty();
-            }
-        }).iterator();
-    }
+  @Override
+  public Iterator<SingleKeyRecordIterator> buildRecordIterators(final Stream<ObjectNode> stream) {
+    return stream.flatMap(item -> {
+      final StaticBuffer key = new KeyBuilder(item).build(Constants.JANUSGRAPH_PARTITION_KEY);
+      final RecordIterator<Entry> recordIterator = createRecordIterator(item);
+      if (recordIterator.hasNext()) {
+        return Stream.of(new SingleKeyRecordIterator(key, recordIterator));
+      } else {
+        return Stream.empty();
+      }
+    }).iterator();
+  }
 
-    private RecordIterator<Entry> createRecordIterator(final ObjectNode item) {
-        item.remove(Constants.JANUSGRAPH_PARTITION_KEY);
-        final List<Entry> entries = new EntryBuilder(item)
-            .slice(sliceQuery.getSliceStart(), sliceQuery.getSliceEnd())
-            .limit(sliceQuery.getLimit())
-            .buildAll();
-        return new StaticRecordIterator(entries);
-    }
+  private RecordIterator<Entry> createRecordIterator(final ObjectNode item) {
+    item.remove(Constants.JANUSGRAPH_PARTITION_KEY);
+    final List<Entry> entries = new EntryBuilder(item)
+        .slice(sliceQuery.getSliceStart(), sliceQuery.getSliceEnd())
+        .limit(sliceQuery.getLimit())
+        .buildAll();
+    return new StaticRecordIterator(entries);
+  }
 }

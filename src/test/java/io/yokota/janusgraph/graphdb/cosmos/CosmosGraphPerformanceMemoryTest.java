@@ -19,8 +19,8 @@ import org.janusgraph.graphdb.JanusGraphPerformanceMemoryTest;
 
 public class CosmosGraphPerformanceMemoryTest extends JanusGraphPerformanceMemoryTest {
 
-    @Override
-    public WriteConfiguration getConfiguration() {
-        return CosmosStorageSetup.getCosmosGraphConfiguration();
-    }
+  @Override
+  public WriteConfiguration getConfiguration() {
+    return CosmosStorageSetup.getCosmosGraphConfiguration();
+  }
 }
