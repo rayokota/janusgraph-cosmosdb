@@ -549,7 +549,7 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
    *
    * @throws BackendException
    */
-  //@Test
+  @Test
   @FeatureFlag(feature = JanusGraphFeature.Scan)
   public void testGetKeysColumnSlicesSimple()
       throws BackendException {

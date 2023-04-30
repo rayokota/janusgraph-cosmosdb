@@ -35,50 +35,6 @@ public class DummyCosmosKeyValueTest extends DummyKeyColumnValueStoreTest {
     return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
   }
 
-  int nKeys = 100;
-  int nColumns = 10;
-
-  @Test
-  public void scanTest() throws BackendException {
-    String[][] values = generateValues();
-    loadValues(values);
-    KeyIterator iterator0 = KCVSUtil.getKeys(store, storeFeatures(), 8, 4, tx);
-    verifyIterator(iterator0, nKeys);
-    clopen();
-    KeyIterator iterator1 = KCVSUtil.getKeys(store, storeFeatures(), 8, 4, tx);
-    KeyIterator iterator2 = KCVSUtil.getKeys(store, storeFeatures(), 8, 4, tx);
-    // The idea is to open an iterator without using it
-    // to make sure that closing a transaction will clean it up.
-    // (important for BerkeleyJE where leaving cursors open causes exceptions)
-    @SuppressWarnings("unused")
-    KeyIterator iterator3 = KCVSUtil.getKeys(store, storeFeatures(), 8, 4, tx);
-    verifyIterator(iterator1, nKeys);
-    verifyIterator(iterator2, nKeys);
-  }
-
-  @Override
-  public String[][] generateValues() {
-    return KeyValueStoreUtil.generateData(nKeys, nColumns);
-  }
-
-  private void verifyIterator(KeyIterator iterator, int expectedKeys) {
-    int keys = 0;
-    while (iterator.hasNext()) {
-      StaticBuffer b = iterator.next();
-      assertTrue(b != null && b.length() > 0);
-      keys++;
-      RecordIterator<Entry> entryRecordIterator = iterator.getEntries();
-      int cols = 0;
-      while (entryRecordIterator.hasNext()) {
-        Entry e = entryRecordIterator.next();
-        assertTrue(e != null && e.length() > 0);
-        cols++;
-      }
-      assertEquals(1, cols);
-    }
-    assertEquals(expectedKeys, keys);
-  }
-
   @AfterEach
   public void tearDown() throws Exception {
     if (null != this.manager) {
