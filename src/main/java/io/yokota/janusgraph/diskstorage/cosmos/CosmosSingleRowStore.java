@@ -88,74 +88,94 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   @Override
   public KeyIterator getKeys(final SliceQuery query, final StoreTransaction txh)
       throws BackendException {
-    log.debug("==> getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
+    try {
+      log.debug("==> getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query),
+          txh);
 
-    String sql = "SELECT * FROM c";
-    CosmosPagedIterable<ObjectNode> iterable = getContainer().queryItems(sql,
-        new CosmosQueryRequestOptions(), ObjectNode.class);
-    // TODO make page size configurable?
-    log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query), txh);
-    return new StreamBackedKeyIterator<>(iterable.stream(), new SingleRowStreamInterpreter(query));
+      String sql = "SELECT * FROM c";
+      CosmosPagedIterable<ObjectNode> iterable = getContainer().queryItems(sql,
+          new CosmosQueryRequestOptions(), ObjectNode.class);
+      // TODO make page size configurable?
+      return new StreamBackedKeyIterator<>(iterable.stream(),
+          new SingleRowStreamInterpreter(query));
+    } finally {
+      log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query),
+          txh);
+    }
   }
 
   @Override
   public EntryList getSlice(final KeySliceQuery query, final StoreTransaction txh)
       throws BackendException {
-    log.debug("==> getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(),
-        encodeForLog(query), txh);
-    String itemId = AbstractBuilder.encodeKey(query.getKey());
-    CosmosItemResponse<ObjectNode> response = getContainer()
-        .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
-            ObjectNode.class);
+    EntryList filteredEntries = null;
+    try {
+      log.debug("==> getSliceKeySliceQuery table:{} query:{} txh:{}", getContainerName(),
+          encodeForLog(query), txh);
+      String itemId = AbstractBuilder.encodeKey(query.getKey());
+      CosmosItemResponse<ObjectNode> response = getContainer()
+          .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
+              ObjectNode.class);
 
-    EntryList filteredEntries = extractEntriesFromGetItemResult(
-        response != null ? response.getItem() : null,
-        query.getSliceStart(), query.getSliceEnd(), query.getLimit());
-    log.debug("<== getSliceKeySliceQuery table:{} query:{} txh:{} returning:{}", getContainerName(),
-        encodeForLog(query), txh,
-        filteredEntries.size());
-    return filteredEntries;
+      filteredEntries = extractEntriesFromGetItemResult(
+          response != null ? response.getItem() : null,
+          query.getSliceStart(), query.getSliceEnd(), query.getLimit());
+      return filteredEntries;
+    } finally {
+      log.debug("<== getSliceKeySliceQuery table:{} query:{} txh:{} returning:{}",
+          getContainerName(),
+          encodeForLog(query), txh,
+          filteredEntries != null ? filteredEntries.size() : 0);
+
+    }
   }
 
   @Override
   public Map<StaticBuffer, EntryList> getSlice(final List<StaticBuffer> keys,
       final SliceQuery query, final StoreTransaction txh) throws BackendException {
-    log.debug("==> getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}", getContainerName(),
-        encodeForLog(keys), encodeForLog(query),
-        txh);
-    return keys.stream()
-        .parallel()
-        .map(key -> {
-              String itemId = AbstractBuilder.encodeKey(key);
-              CosmosItemResponse<ObjectNode> response = getContainer()
-                  .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
-                      ObjectNode.class);
-              EntryList entryList = extractEntriesFromGetItemResult(
-                  response.getItem(),
-                  query.getSliceStart(), query.getSliceEnd(), query.getLimit());
-              return Tuples.of(key, entryList);
-            }
-        )
-        .collect(Collectors.toMap(Tuple2::getT1, Tuple2::getT2));
+    try {
+      log.debug("==> getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}", getContainerName(),
+          encodeForLog(keys), encodeForLog(query),
+          txh);
+      return keys.stream()
+          .parallel()
+          .map(key -> {
+                String itemId = AbstractBuilder.encodeKey(key);
+                CosmosItemResponse<ObjectNode> response = getContainer()
+                    .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
+                        ObjectNode.class);
+                EntryList entryList = extractEntriesFromGetItemResult(
+                    response.getItem(),
+                    query.getSliceStart(), query.getSliceEnd(), query.getLimit());
+                return Tuples.of(key, entryList);
+              }
+          )
+          .collect(Collectors.toMap(Tuple2::getT1, Tuple2::getT2));
+    } finally {
+      log.debug("<== getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}", getContainerName(),
+          encodeForLog(keys), encodeForLog(query),
+          txh);
+    }
   }
 
   @Override
   public void mutate(final StaticBuffer hashKey, final List<Entry> additions,
       final List<StaticBuffer> deletions, final StoreTransaction txh) throws BackendException {
-    log.debug("==> mutate table:{} keys:{} additions:{} deletions:{} txh:{}",
-        getContainerName(),
-        encodeKeyForLog(hashKey),
-        encodeForLog(additions),
-        encodeForLog(deletions),
-        txh);
-    super.mutateOneKey(hashKey, new KCVMutation(additions, deletions), txh);
-
-    log.debug("<== mutate table:{} keys:{} additions:{} deletions:{} txh:{} returning:void",
-        getContainerName(),
-        encodeKeyForLog(hashKey),
-        encodeForLog(additions),
-        encodeForLog(deletions),
-        txh);
+    try {
+      log.debug("==> mutate table:{} keys:{} additions:{} deletions:{} txh:{}",
+          getContainerName(),
+          encodeKeyForLog(hashKey),
+          encodeForLog(additions),
+          encodeForLog(deletions),
+          txh);
+      super.mutateOneKey(hashKey, new KCVMutation(additions, deletions), txh);
+    } finally {
+      log.debug("<== mutate table:{} keys:{} additions:{} deletions:{} txh:{} returning:void",
+          getContainerName(),
+          encodeKeyForLog(hashKey),
+          encodeForLog(additions),
+          encodeForLog(deletions),
+          txh);
+    }
   }
 
   @Override

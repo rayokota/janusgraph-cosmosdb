@@ -135,9 +135,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
 
   @Override
   public boolean exists() throws BackendException {
-    // TODO
-    //return client.getDelegate().listTables(new ListTablesRequest()) != null;
-    return false;
+    return client.readAllDatabases() != null;
   }
 
   @Override

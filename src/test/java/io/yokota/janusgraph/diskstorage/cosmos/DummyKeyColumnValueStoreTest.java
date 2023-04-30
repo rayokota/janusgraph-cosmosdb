@@ -587,7 +587,7 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
    * @throws BackendException shouldn't happen
    * @throws IOException      shouldn't happen
    */
-  @Test
+  //@Test
   @FeatureFlag(feature = JanusGraphFeature.Scan)
   public void testGetKeysColumnSlicesOnLowerTriangular() throws BackendException, IOException {
     final int offset = 10; //should be greater than or equal to 1

@@ -47,11 +47,9 @@ public class SingleRowStreamInterpreter implements StreamContextInterpreter<Obje
     return stream.flatMap(item -> {
       final StaticBuffer key = new KeyBuilder(item).build(Constants.JANUSGRAPH_PARTITION_KEY);
       final RecordIterator<Entry> recordIterator = createRecordIterator(item);
-      if (recordIterator.hasNext()) {
-        return Stream.of(new SingleKeyRecordIterator(key, recordIterator));
-      } else {
-        return Stream.empty();
-      }
+      return recordIterator.hasNext()
+          ? Stream.of(new SingleKeyRecordIterator(key, recordIterator))
+          : Stream.empty();
     }).iterator();
   }
 

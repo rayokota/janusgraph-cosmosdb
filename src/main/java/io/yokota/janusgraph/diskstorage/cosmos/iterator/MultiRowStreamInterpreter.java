@@ -57,13 +57,11 @@ public class MultiRowStreamInterpreter implements StreamContextInterpreter<List<
       final String partitionKey = items.get(0).get(Constants.JANUSGRAPH_PARTITION_KEY).textValue();
       final StaticBuffer key = decodeKey(partitionKey);
       final StaticRecordIterator recordIterator = createRecordIterator(items);
-      return Stream.of(new SingleKeyRecordIterator(key, recordIterator));
-            /*
-            return recordIterator.hasNext()
-                ? Stream.of(new SingleKeyRecordIterator(key, recordIterator))
-                : Stream.empty();
-
-             */
+      // TODO remove
+      //return Stream.of(new SingleKeyRecordIterator(key, recordIterator));
+      return recordIterator.hasNext()
+          ? Stream.of(new SingleKeyRecordIterator(key, recordIterator))
+          : Stream.empty();
     }).iterator();
   }
 
@@ -75,6 +73,8 @@ public class MultiRowStreamInterpreter implements StreamContextInterpreter<List<
               .slice(sliceQuery.getSliceStart(), sliceQuery.getSliceEnd())
               .build();
           return entry != null ? Stream.of(entry) : Stream.empty();
-        }).collect(Collectors.toList()));
+        })
+        .limit(sliceQuery.getLimit())
+        .collect(Collectors.toList()));
   }
 }

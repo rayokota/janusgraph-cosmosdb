@@ -27,5 +27,4 @@ public interface StreamContextInterpreter<T> {
    * @return
    */
   Iterator<SingleKeyRecordIterator> buildRecordIterators(Stream<T> stream);
-
 }
