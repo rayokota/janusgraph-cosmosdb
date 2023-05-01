@@ -15,11 +15,14 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
 import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.KeyColumnValueStoreTest;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.junit.jupiter.api.AfterEach;
 
-public class CosmosStoreTest extends KeyColumnValueStoreTest {
+public class MultiCosmosStoreTest extends AbstractCosmosStoreTest {
+
+  public MultiCosmosStoreTest() {
+    super(BackendDataModel.MULTI);
+  }
 
   @Override
   public KeyColumnValueStoreManager openStorageManager() throws BackendException {
