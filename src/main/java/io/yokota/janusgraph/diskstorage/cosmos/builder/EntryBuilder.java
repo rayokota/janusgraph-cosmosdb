@@ -44,7 +44,6 @@ public class EntryBuilder extends AbstractBuilder {
 
   public EntryBuilder(final ObjectNode item) {
     this.item = item;
-    item.remove(Constants.JANUSGRAPH_PARTITION_KEY);
   }
 
   public List<Entry> buildAll() {
@@ -61,6 +60,7 @@ public class EntryBuilder extends AbstractBuilder {
       sliceEndEntry = null;
     }
     return Streams.streamOf(item.fields())
+        .filter(entry -> !ignoreAttribute(entry.getKey()))
         .map(entry -> {
           final StaticBuffer columnKey = decodeKey(entry.getKey());
           final StaticBuffer value = decodeValue(entry.getValue().textValue());
@@ -71,6 +71,12 @@ public class EntryBuilder extends AbstractBuilder {
         .sorted()
         .limit(limit)
         .collect(Collectors.toList());
+  }
+
+  private boolean ignoreAttribute(String name) {
+    return name.equals(Constants.JANUSGRAPH_PARTITION_KEY)
+        || name.equals((Constants.JANUSGRAPH_COLUMN_KEY))
+        || name.startsWith("_");  // ignore internal CosmosDB attributes
   }
 
   public Entry build() {

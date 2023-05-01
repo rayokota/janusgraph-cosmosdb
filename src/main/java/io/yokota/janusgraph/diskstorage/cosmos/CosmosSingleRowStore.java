@@ -18,18 +18,18 @@ import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.en
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
 
 import com.azure.cosmos.models.CosmosBulkExecutionOptions;
+import com.azure.cosmos.models.CosmosBulkItemRequestOptions;
 import com.azure.cosmos.models.CosmosBulkOperations;
 import com.azure.cosmos.models.CosmosItemOperation;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
-import com.azure.cosmos.models.CosmosPatchItemRequestOptions;
 import com.azure.cosmos.models.CosmosPatchOperations;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
+import io.yokota.janusgraph.diskstorage.cosmos.builder.ItemBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.iterator.SingleRowStreamInterpreter;
 import io.yokota.janusgraph.diskstorage.cosmos.iterator.StreamBackedKeyIterator;
 import io.yokota.janusgraph.diskstorage.cosmos.mutation.BulkWriter;
@@ -44,11 +44,11 @@ import org.janusgraph.diskstorage.EntryList;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.KCVMutation;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyIterator;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyRangeQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.KeySliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.StaticArrayEntryList;
+import reactor.core.publisher.Flux;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -182,27 +182,45 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   public void mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
-    BulkWriter bulkWriter = new BulkWriter(getContainer());
-    List<CosmosItemOperation> ops = mutations.entrySet().stream()
-            .map(entry -> convertToOp(encodeKey(entry.getKey()), entry.getValue()))
+    // Ensure the items already exist, as patch will not create the item
+    // (it is not a patch-sert similar to upsert).
+    // If the item already exists, the create will fail, which we ignore.
+    List<CosmosItemOperation> createOps = mutations.entrySet().stream()
+        .map(entry -> convertToCreate(entry.getKey()))
         .collect(Collectors.toList());
-    ops.forEach(bulkWriter::scheduleWrites);
+    getContainer().executeBulkOperations(Flux.fromIterable(createOps), new CosmosBulkExecutionOptions())
+        .take(createOps.size())
+        .blockLast();
+
+    BulkWriter bulkWriter = new BulkWriter(getContainer());
+    List<CosmosItemOperation> patchOps = mutations.entrySet().stream()
+            .map(entry -> convertToPatch(encodeKey(entry.getKey()), entry.getValue()))
+        .collect(Collectors.toList());
+    patchOps.forEach(bulkWriter::scheduleWrites);
     bulkWriter.execute(new CosmosBulkExecutionOptions())
-        .take(ops.size())
+        .take(patchOps.size())
         .blockLast();
   }
 
-  protected CosmosItemOperation convertToOp(String key, KCVMutation mutation) {
+  protected CosmosItemOperation convertToCreate(StaticBuffer key) {
+    ObjectNode item = new ItemBuilder()
+        .partitionKey(key)
+        .columnKey(key)
+        .build();
+    return CosmosBulkOperations.getCreateItemOperation(item, new PartitionKey(encodeKey(key)), new CosmosBulkItemRequestOptions());
+  }
+
+  protected CosmosItemOperation convertToPatch(String key, KCVMutation mutation) {
     CosmosPatchOperations patch = CosmosPatchOperations.create();
     if (mutation.hasDeletions()) {
       for (StaticBuffer b : mutation.getDeletions()) {
-        patch.remove(encodeKey(b));
+        patch.remove("/" + encodeKey(b));
       }
     }
 
     if (mutation.hasAdditions()) {
       for (Entry e : mutation.getAdditions()) {
-        patch.add(encodeKey(e.getColumn()), encodeValue(e.getValue()));
+        patch.add("/" + encodeKey(e.getColumn()), encodeValue(e.getValue()));
       }
     }
     return CosmosBulkOperations.getPatchItemOperation(key, new PartitionKey(key), patch);
