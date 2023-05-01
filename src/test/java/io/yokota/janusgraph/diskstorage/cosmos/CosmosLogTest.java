@@ -17,9 +17,12 @@ import io.yokota.janusgraph.CosmosStorageSetup;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.log.KCVSLogTest;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.TestInfo;
 
 public class CosmosLogTest extends KCVSLogTest {
 
+  @Override
   public KeyColumnValueStoreManager openStorageManager() throws BackendException {
     return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
   }

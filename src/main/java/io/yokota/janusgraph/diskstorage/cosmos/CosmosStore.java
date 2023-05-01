@@ -72,12 +72,6 @@ public class CosmosStore extends AbstractCosmosStore {
   }
 
   @Override
-  public KeyIterator getKeys(final KeyRangeQuery query, final StoreTransaction txh)
-      throws BackendException {
-    throw new UnsupportedOperationException("Byteorder is not maintained.");
-  }
-
-  @Override
   public KeyIterator getKeys(final SliceQuery query, final StoreTransaction txh)
       throws BackendException {
     try {

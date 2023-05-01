@@ -316,7 +316,7 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
     checkValues(values);
   }
 
-  ////@Test
+  //@Test
   public void compareStores() throws BackendException {
     final int keys = 1000, columns = 2000;
     final boolean normalMode = true;
@@ -751,13 +751,13 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
     }
   }
 
-  //@Test
+  @Test
   public void testConcurrentGetSlice()
       throws ExecutionException, InterruptedException, BackendException {
     testConcurrentStoreOps(false);
   }
 
-  //@Test
+  @Test
   public void testConcurrentGetSliceAndMutate()
       throws BackendException, ExecutionException, InterruptedException {
     testConcurrentStoreOps(true);

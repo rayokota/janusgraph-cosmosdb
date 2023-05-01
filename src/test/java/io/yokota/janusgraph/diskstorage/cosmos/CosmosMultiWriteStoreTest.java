@@ -1,3 +1,4 @@
+// Copyright 2017 JanusGraph Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,40 +16,22 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
 import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.KeyColumnValueStoreTest;
+import org.janusgraph.diskstorage.MultiWriteKeyColumnValueStoreTest;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 
-public class CosmosFixedLengthKCVSTest extends KeyColumnValueStoreTest {
+public class CosmosMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
 
-  public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-    return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
-  }
-
-  @AfterEach
-  public void tearDown() throws Exception {
-    if (null != this.manager) {
-      this.manager.clearStorage();
+    @Override
+    public KeyColumnValueStoreManager openStorageManager() throws BackendException {
+        return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
     }
-    super.tearDown();
-  }
 
-  @Test
-  @Override
-  public void testClearStorage() {
-
-  }
-
-  @Test
-  @Override
-  public void testConcurrentGetSlice() {
-
-  }
-
-  @Test
-  @Override
-  public void testConcurrentGetSliceAndMutate() {
-
-  }
+    @AfterEach
+    public void tearDown() throws Exception {
+        if (null != this.manager) {
+            this.manager.clearStorage();
+        }
+        super.tearDown();
+    }
 }

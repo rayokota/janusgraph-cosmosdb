@@ -31,6 +31,8 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.KCVMutation;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyIterator;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyRangeQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.KeySliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.KeySlicesIterator;
 import org.janusgraph.diskstorage.keycolumnvalue.MultiSlicesQuery;
@@ -79,7 +81,13 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
   }
 
   @Override
-  public KeySlicesIterator getKeys(MultiSlicesQuery queries, StoreTransaction txh)
+  public KeyIterator getKeys(final KeyRangeQuery query, final StoreTransaction txh)
+      throws BackendException {
+    throw new UnsupportedOperationException("Keys are not byte ordered.");
+  }
+
+  @Override
+  public KeySlicesIterator getKeys(final MultiSlicesQuery queries, final StoreTransaction txh)
       throws BackendException {
     throw new UnsupportedOperationException();
   }

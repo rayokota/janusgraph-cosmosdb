@@ -72,12 +72,6 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     super(manager, prefix, storeName);
   }
 
-  @Override
-  public KeyIterator getKeys(final KeyRangeQuery query, final StoreTransaction txh)
-      throws BackendException {
-    throw new UnsupportedOperationException("Keys are not byte ordered.");
-  }
-
   private EntryList extractEntriesFromGetItemResult(final ObjectNode item,
       final StaticBuffer sliceStart, final StaticBuffer sliceEnd, final int limit) {
     List<Entry> filteredEntries = Collections.emptyList();

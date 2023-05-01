@@ -13,15 +13,17 @@
 
 package io.yokota.janusgraph.diskstorage.cosmos;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import io.yokota.janusgraph.CosmosStorageSetup;
 import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.KeyColumnValueStoreTest;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 
-public class CosmosVariableLengthKCVSTest extends KeyColumnValueStoreTest {
+public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
 
+  @Override
   public KeyColumnValueStoreManager openStorageManager() throws BackendException {
     return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
   }
@@ -32,23 +34,5 @@ public class CosmosVariableLengthKCVSTest extends KeyColumnValueStoreTest {
       this.manager.clearStorage();
     }
     super.tearDown();
-  }
-
-  @Test
-  @Override
-  public void testClearStorage() {
-
-  }
-
-  @Test
-  @Override
-  public void testConcurrentGetSlice() {
-
-  }
-
-  @Test
-  @Override
-  public void testConcurrentGetSliceAndMutate() {
-
   }
 }
