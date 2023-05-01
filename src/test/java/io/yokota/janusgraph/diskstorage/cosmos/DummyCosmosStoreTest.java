@@ -18,14 +18,64 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
 import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.Entry;
+import org.janusgraph.diskstorage.KeyValueStoreUtil;
+import org.janusgraph.diskstorage.StaticBuffer;
+import org.janusgraph.diskstorage.keycolumnvalue.KCVSUtil;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyIterator;
+import org.janusgraph.diskstorage.util.RecordIterator;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
 
   @Override
   public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-    return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
+    return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration(BackendDataModel.SINGLE));
+  }
+
+  int nKeys = 10;
+  int nColumns = 2;
+
+  public String[][] generateValues() {
+    return KeyValueStoreUtil.generateData(nKeys, nColumns);
+  }
+
+  @Test
+  public void scanTest() throws BackendException {
+    String[][] values = generateValues();
+    loadValues(values);
+    KeyIterator iterator0 = KCVSUtil.getKeys(store, storeFeatures(), 8, 4, tx);
+    verifyIterator(iterator0, nKeys);
+    clopen();
+    KeyIterator iterator1 = KCVSUtil.getKeys(store, storeFeatures(), 8, 4, tx);
+    KeyIterator iterator2 = KCVSUtil.getKeys(store, storeFeatures(), 8, 4, tx);
+    // The idea is to open an iterator without using it
+    // to make sure that closing a transaction will clean it up.
+    // (important for BerkeleyJE where leaving cursors open causes exceptions)
+    @SuppressWarnings("unused")
+    KeyIterator iterator3 = KCVSUtil.getKeys(store, storeFeatures(), 8, 4, tx);
+    verifyIterator(iterator1, nKeys);
+    verifyIterator(iterator2, nKeys);
+  }
+
+  private void verifyIterator(KeyIterator iterator, int expectedKeys) {
+    int keys = 0;
+    while (iterator.hasNext()) {
+      StaticBuffer b = iterator.next();
+      assertTrue(b != null && b.length() > 0);
+      keys++;
+      RecordIterator<Entry> entryRecordIterator = iterator.getEntries();
+      int cols = 0;
+      while (entryRecordIterator.hasNext()) {
+        Entry e = entryRecordIterator.next();
+        assertTrue(e != null && e.length() > 0);
+        cols++;
+      }
+      assertEquals(1, cols);
+    }
+    assertEquals(expectedKeys, keys);
   }
 
   @AfterEach

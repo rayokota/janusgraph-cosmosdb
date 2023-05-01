@@ -103,7 +103,7 @@ public final class Constants {
               + "which cannot be guaranteed when scans are run in parallel",
           LOCAL, false);
   public static final ConfigOption<String> STORES_DATA_MODEL =
-      new ConfigOption<>(Constants.COSMOS_STORES_NAMESPACE, "data-model",
+      new ConfigOption<>(COSMOS_STORES_NAMESPACE, "data-model",
           "SINGLE Means that all the values for a given key are put into a single DynamoDB item. "
               + "A SINGLE is efficient because all the updates for a single key can be done atomically. "
               + "However, the trade-off is that DynamoDB has a 400k limit per item so it cannot hold much data. "
@@ -111,6 +111,10 @@ public final class Constants {
               + "A MULTI implementation is slightly less efficient than SINGLE because it must use DynamoDB Query "
               + "rather than a direct lookup. It is HIGHLY recommended to use MULTI for edgestore unless your graph has "
               + "very low max degree.",
+          FIXED, BackendDataModel.UNKNOWN.name());
+  public static final ConfigOption<String> STORES_DATA_MODEL_DEFAULT =
+      new ConfigOption<>(COSMOS_CONFIGURATION_NAMESPACE, "data-model-default",
+          "The default data model.",
           FIXED, BackendDataModel.MULTI.name());
   public static final ConfigOption<Boolean> COSMOS_USE_NATIVE_LOCKING = new ConfigOption<>(
       COSMOS_CONFIGURATION_NAMESPACE,
@@ -123,19 +127,19 @@ public final class Constants {
           "This feature sets the force consistent read property on Cosmos DB calls.",
           LOCAL, true);
   public static final ConfigOption<Long> STORES_INITIAL_CAPACITY_READ =
-      new ConfigOption<>(Constants.COSMOS_STORES_NAMESPACE, "initial-capacity-read",
+      new ConfigOption<>(COSMOS_STORES_NAMESPACE, "initial-capacity-read",
           "Define the initial read capacity for a given Cosmos DB table.",
           LOCAL, 4L);
   public static final ConfigOption<Long> STORES_INITIAL_CAPACITY_WRITE =
-      new ConfigOption<>(Constants.COSMOS_STORES_NAMESPACE, "initial-capacity-write",
+      new ConfigOption<>(COSMOS_STORES_NAMESPACE, "initial-capacity-write",
           "Define the initial write capacity for a given Cosmos DB table.",
           LOCAL, 4L);
   public static final ConfigOption<Double> STORES_READ_RATE_LIMIT =
-      new ConfigOption<>(Constants.COSMOS_STORES_NAMESPACE, "read-rate",
+      new ConfigOption<>(COSMOS_STORES_NAMESPACE, "read-rate",
           "The max number of reads per second.",
           LOCAL, 4.0);
   public static final ConfigOption<Double> STORES_WRITE_RATE_LIMIT =
-      new ConfigOption<>(Constants.COSMOS_STORES_NAMESPACE, "write-rate",
+      new ConfigOption<>(COSMOS_STORES_NAMESPACE, "write-rate",
           "Used to throttle write rate of given table. The max number of writes per second.",
           LOCAL, 4.0);
   public static final ConfigOption<Duration> COSMOS_CLIENT_CONN_TIMEOUT =

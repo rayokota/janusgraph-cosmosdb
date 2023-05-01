@@ -18,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
+import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import org.janusgraph.core.JanusGraphException;
@@ -30,15 +31,20 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CosmosGraphTest extends JanusGraphTest {
+public class AbstractCosmosGraphTest extends JanusGraphTest {
 
   private static final Logger log =
-      LoggerFactory.getLogger(CosmosGraphTest.class);
+      LoggerFactory.getLogger(AbstractCosmosGraphTest.class);
+
+  protected final BackendDataModel model;
+
+  protected AbstractCosmosGraphTest(final BackendDataModel model) {
+    this.model = model;
+  }
 
   @Override
   public WriteConfiguration getConfiguration() {
-    ModifiableConfiguration modifiableConfiguration = CosmosStorageSetup.getCosmosConfiguration();
-    return modifiableConfiguration.getConfiguration();
+    return CosmosStorageSetup.getCosmosGraphConfiguration(model);
   }
 
   @Test

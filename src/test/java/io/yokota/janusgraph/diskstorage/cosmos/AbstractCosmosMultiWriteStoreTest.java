@@ -1,3 +1,4 @@
+// Copyright 2017 JanusGraph Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,15 +16,28 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
 import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.MultiWriteKeyColumnValueStoreTest;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
-import org.janusgraph.diskstorage.log.KCVSLogTest;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.TestInfo;
 
-public class CosmosLogTest extends KCVSLogTest {
+public class AbstractCosmosMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
 
-  @Override
-  public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-    return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
-  }
+    protected final BackendDataModel model;
+
+    protected AbstractCosmosMultiWriteStoreTest(final BackendDataModel model) {
+        this.model = model;
+    }
+
+    @Override
+    public KeyColumnValueStoreManager openStorageManager() throws BackendException {
+        return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration(model));
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        if (null != this.manager) {
+            this.manager.clearStorage();
+        }
+        super.tearDown();
+    }
 }

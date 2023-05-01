@@ -24,6 +24,14 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 public enum BackendDataModel {
+  UNKNOWN("Unknown") {
+    @Override
+    public CosmosKeyColumnValueStore createStoreBackend(final CosmosStoreManager manager,
+        final String prefix, final String name) {
+      throw new UnsupportedOperationException();
+    }
+
+  },
   SINGLE("Single") {
     @Override
     public CosmosKeyColumnValueStore createStoreBackend(final CosmosStoreManager manager,

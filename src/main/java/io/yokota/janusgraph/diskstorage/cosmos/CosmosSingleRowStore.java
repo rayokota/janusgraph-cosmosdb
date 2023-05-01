@@ -15,6 +15,7 @@
 package io.yokota.janusgraph.diskstorage.cosmos;
 
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
+import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
 
 import com.azure.cosmos.models.CosmosBulkExecutionOptions;
 import com.azure.cosmos.models.CosmosBulkOperations;
@@ -96,8 +97,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(getContainer().queryItems(sql,
           new CosmosQueryRequestOptions(), ObjectNode.class));
       // TODO make page size configurable?
-      return new StreamBackedKeyIterator<>(iterable.stream(),
-          new SingleRowStreamInterpreter(query));
+      return new StreamBackedKeyIterator<>(iterable.stream(), new SingleRowStreamInterpreter(query));
     } finally {
       log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query),
           txh);
@@ -202,8 +202,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
 
     if (mutation.hasAdditions()) {
       for (Entry e : mutation.getAdditions()) {
-        patch.add(encodeKey(e.getColumn()),
-            AbstractBuilder.encodeValue(e.getValue()));
+        patch.add(encodeKey(e.getColumn()), encodeValue(e.getValue()));
       }
     }
     return CosmosBulkOperations.getPatchItemOperation(key, new PartitionKey(key), patch);

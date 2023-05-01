@@ -31,7 +31,7 @@ public class CosmosGraphComputerProvider extends AbstractJanusGraphComputerProvi
       String testMethodName) {
     ModifiableConfiguration config = super.getJanusGraphConfiguration(graphName, test,
         testMethodName);
-    config.setAll(CosmosStorageSetup.getCosmosConfiguration().getAll());
+    config.setAll(CosmosStorageSetup.getCosmosConfiguration(graphName).getAll());
     config.set(GraphDatabaseConfiguration.IDAUTHORITY_WAIT, Duration.ofMillis(20));
     config.set(GraphDatabaseConfiguration.STORAGE_TRANSACTIONAL, false);
     return config;

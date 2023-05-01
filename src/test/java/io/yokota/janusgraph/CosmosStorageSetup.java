@@ -16,6 +16,7 @@ package io.yokota.janusgraph;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_ENDPOINT;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_KEY;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.STORES_DATA_MODEL;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.STORES_DATA_MODEL_DEFAULT;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DROP_ON_CLEAR;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_BACKEND;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.buildGraphConfiguration;
@@ -29,30 +30,29 @@ import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 public class CosmosStorageSetup extends StorageSetup {
 
 
-  public static ModifiableConfiguration getCosmosConfiguration() {
-    return getCosmosConfiguration(BackendDataModel.MULTI);
-  }
-
   public static ModifiableConfiguration getCosmosConfiguration(final String graphName) {
     return getCosmosConfiguration(graphName, BackendDataModel.MULTI);
   }
 
   public static ModifiableConfiguration getCosmosConfiguration(final BackendDataModel model) {
-    return getCosmosConfiguration("janusgraph-test-cosmos", model);
+    return getCosmosConfiguration(null, model);
   }
 
   public static ModifiableConfiguration getCosmosConfiguration(final String graphName, final BackendDataModel model) {
-    ModifiableConfiguration set = buildGraphConfiguration()
+    ModifiableConfiguration config = buildGraphConfiguration()
         .set(STORAGE_BACKEND, "io.yokota.janusgraph.diskstorage.cosmos.CosmosStoreManager")
-        .set(STORES_DATA_MODEL, model.name(), graphName)
+        .set(STORES_DATA_MODEL_DEFAULT, model.name())
         .set(COSMOS_CLIENT_ENDPOINT, "https://localhost:8081")
         .set(COSMOS_CLIENT_KEY,
             "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==")
         .set(DROP_ON_CLEAR, false);
-    return set;
+    if (graphName != null) {
+      config.set(STORES_DATA_MODEL, model.name(), graphName);
+    }
+    return config;
   }
 
-  public static WriteConfiguration getCosmosGraphConfiguration() {
-    return getCosmosConfiguration().getConfiguration();
+  public static WriteConfiguration getCosmosGraphConfiguration(final BackendDataModel model) {
+    return getCosmosConfiguration(model).getConfiguration();
   }
 }

@@ -11,16 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.yokota.janusgraph.diskstorage.cosmos;
+package io.yokota.janusgraph.graphdb.cosmos;
 
-import io.yokota.janusgraph.CosmosStorageSetup;
-import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
-import org.junit.jupiter.api.AfterEach;
+import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 
-public class MultiCosmosStoreTest extends AbstractCosmosStoreTest {
+public class MultiCosmosGraphConcurrentTest extends AbstractCosmosGraphConcurrentTest {
 
-  public MultiCosmosStoreTest() {
+  public MultiCosmosGraphConcurrentTest() {
     super(BackendDataModel.MULTI);
   }
 }

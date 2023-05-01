@@ -16,22 +16,19 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
 import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.MultiWriteKeyColumnValueStoreTest;
+import org.janusgraph.diskstorage.IDAuthorityTest;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
-import org.junit.jupiter.api.AfterEach;
 
-public class CosmosMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
+public class AbstractCosmosIDAuthorityTest extends IDAuthorityTest {
+
+    protected final BackendDataModel model;
+
+    protected AbstractCosmosIDAuthorityTest(final BackendDataModel model) {
+        this.model = model;
+    }
 
     @Override
     public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-        return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
-    }
-
-    @AfterEach
-    public void tearDown() throws Exception {
-        if (null != this.manager) {
-            this.manager.clearStorage();
-        }
-        super.tearDown();
+        return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration(model));
     }
 }

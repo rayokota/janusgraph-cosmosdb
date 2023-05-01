@@ -14,13 +14,13 @@
 package io.yokota.janusgraph.graphdb.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
+import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.graphdb.JanusGraphPerformanceMemoryTest;
+import org.janusgraph.graphdb.JanusGraphConcurrentTest;
 
-public class CosmosGraphPerformanceMemoryTest extends JanusGraphPerformanceMemoryTest {
+public class SingleCosmosGraphConcurrentTest extends AbstractCosmosGraphConcurrentTest {
 
-  @Override
-  public WriteConfiguration getConfiguration() {
-    return CosmosStorageSetup.getCosmosGraphConfiguration();
+  public SingleCosmosGraphConcurrentTest() {
+    super(BackendDataModel.SINGLE);
   }
 }
