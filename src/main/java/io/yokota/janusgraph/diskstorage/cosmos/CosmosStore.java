@@ -114,27 +114,6 @@ public class CosmosStore extends AbstractCosmosStore {
     }
   }
 
-  private Stream<Entry> query(final StaticBuffer key, SliceQuery query,
-      final StoreTransaction txh) {
-    String itemId = encodeKey(key);
-    String sql = "SELECT * FROM c where c.pk = '" + itemId
-        + "' and c.id >= '" + encodeKey(query.getSliceStart())
-        + "' and c.id < '" + encodeKey(query.getSliceEnd())
-        + "'";
-
-    CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(getContainer().queryItems(sql,
-        new CosmosQueryRequestOptions(), ObjectNode.class));
-    // TODO make page size configurable?
-    return iterable.stream()
-        .flatMap(item -> {
-          final Entry entry = new EntryBuilder(item)
-              .slice(query.getSliceStart(), query.getSliceEnd())
-              .build();
-          return entry != null ? Stream.of(entry) : Stream.empty();
-        })
-        .limit(query.getLimit());
-  }
-
   @Override
   public Map<StaticBuffer, EntryList> getSlice(final List<StaticBuffer> keys,
       final SliceQuery query, final StoreTransaction txh) throws BackendException {
@@ -159,6 +138,27 @@ public class CosmosStore extends AbstractCosmosStore {
           encodeForLog(query),
           txh);
     }
+  }
+
+  private Stream<Entry> query(final StaticBuffer key, SliceQuery query,
+      final StoreTransaction txh) {
+    String itemId = encodeKey(key);
+    String sql = "SELECT * FROM c where c.pk = '" + itemId
+        + "' and c.id >= '" + encodeKey(query.getSliceStart())
+        + "' and c.id < '" + encodeKey(query.getSliceEnd())
+        + "'";
+
+    CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(getContainer().queryItems(sql,
+        new CosmosQueryRequestOptions(), ObjectNode.class));
+    // TODO make page size configurable?
+    return iterable.stream()
+        .flatMap(item -> {
+          final Entry entry = new EntryBuilder(item)
+              .slice(query.getSliceStart(), query.getSliceEnd())
+              .build();
+          return entry != null ? Stream.of(entry) : Stream.empty();
+        })
+        .limit(query.getLimit());
   }
 
   @Override

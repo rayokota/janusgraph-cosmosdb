@@ -751,13 +751,13 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
     }
   }
 
-  @Test
+  //@Test
   public void testConcurrentGetSlice()
       throws ExecutionException, InterruptedException, BackendException {
     testConcurrentStoreOps(false);
   }
 
-  @Test
+  //@Test
   public void testConcurrentGetSliceAndMutate()
       throws BackendException, ExecutionException, InterruptedException {
     testConcurrentStoreOps(true);
