@@ -15,6 +15,7 @@
 package io.yokota.janusgraph.diskstorage.cosmos;
 
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
+import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
 
 import com.azure.cosmos.models.CosmosBulkExecutionOptions;
 import com.azure.cosmos.models.CosmosBulkOperations;
@@ -201,8 +202,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
 
     if (mutation.hasAdditions()) {
       for (Entry e : mutation.getAdditions()) {
-        patch.add(encodeKey(e.getColumn()),
-            AbstractBuilder.encodeValue(e.getValue()));
+        patch.add(encodeKey(e.getColumn()), encodeValue(e.getValue()));
       }
     }
     return CosmosBulkOperations.getPatchItemOperation(key, new PartitionKey(key), patch);

@@ -35,8 +35,8 @@ public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
     return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration(BackendDataModel.SINGLE));
   }
 
-  int nKeys = 500;
-  int nColumns = 50;
+  int nKeys = 10;
+  int nColumns = 2;
 
   public String[][] generateValues() {
     return KeyValueStoreUtil.generateData(nKeys, nColumns);

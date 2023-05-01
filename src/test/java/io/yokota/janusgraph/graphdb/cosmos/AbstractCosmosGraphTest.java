@@ -44,8 +44,7 @@ public class AbstractCosmosGraphTest extends JanusGraphTest {
 
   @Override
   public WriteConfiguration getConfiguration() {
-    ModifiableConfiguration modifiableConfiguration = CosmosStorageSetup.getCosmosConfiguration(model);
-    return modifiableConfiguration.getConfiguration();
+    return CosmosStorageSetup.getCosmosGraphConfiguration(model);
   }
 
   @Test
