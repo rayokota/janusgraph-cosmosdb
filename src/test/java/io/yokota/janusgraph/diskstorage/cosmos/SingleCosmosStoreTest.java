@@ -23,17 +23,4 @@ public class SingleCosmosStoreTest extends AbstractCosmosStoreTest {
   public SingleCosmosStoreTest() {
     super(BackendDataModel.SINGLE);
   }
-
-  @Override
-  public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-    return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration());
-  }
-
-  @AfterEach
-  public void tearDown() throws Exception {
-    if (null != this.manager) {
-      this.manager.clearStorage();
-    }
-    super.tearDown();
-  }
 }

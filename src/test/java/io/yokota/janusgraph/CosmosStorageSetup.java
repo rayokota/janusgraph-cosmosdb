@@ -55,4 +55,8 @@ public class CosmosStorageSetup extends StorageSetup {
   public static WriteConfiguration getCosmosGraphConfiguration() {
     return getCosmosConfiguration().getConfiguration();
   }
+
+  public static WriteConfiguration getCosmosGraphConfiguration(final BackendDataModel model) {
+    return getCosmosConfiguration(model).getConfiguration();
+  }
 }

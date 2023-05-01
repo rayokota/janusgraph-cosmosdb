@@ -1,3 +1,4 @@
+// Copyright 2017 JanusGraph Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.yokota.janusgraph.graphdb.cosmos;
+package io.yokota.janusgraph.diskstorage.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
-import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.graphdb.JanusGraphPartitionGraphTest;
+import org.janusgraph.diskstorage.BackendException;
+import org.janusgraph.diskstorage.MultiWriteKeyColumnValueStoreTest;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
+import org.junit.jupiter.api.AfterEach;
 
-public class CosmosPartitionGraphTest extends JanusGraphPartitionGraphTest {
+public class SingleCosmosMultiWriteStoreTest extends AbstractCosmosMultiWriteStoreTest {
 
-  @Override
-  public WriteConfiguration getBaseConfiguration() {
-    return CosmosStorageSetup.getCosmosGraphConfiguration();
-  }
+    public SingleCosmosMultiWriteStoreTest() {
+        super(BackendDataModel.SINGLE);
+    }
 }

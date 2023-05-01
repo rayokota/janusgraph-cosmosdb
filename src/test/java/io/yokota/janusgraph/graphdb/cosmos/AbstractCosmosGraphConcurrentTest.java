@@ -14,26 +14,20 @@
 package io.yokota.janusgraph.graphdb.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
+import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.graphdb.JanusGraphOperationCountingTest;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
+import org.janusgraph.graphdb.JanusGraphConcurrentTest;
 
-public class CosmosOperationCountingTest extends JanusGraphOperationCountingTest {
+public class AbstractCosmosGraphConcurrentTest extends JanusGraphConcurrentTest {
 
-  @Override
-  public WriteConfiguration getBaseConfiguration() {
-    return CosmosStorageSetup.getCosmosGraphConfiguration();
+  protected final BackendDataModel model;
+
+  protected AbstractCosmosGraphConcurrentTest(final BackendDataModel model) {
+    this.model = model;
   }
 
-  @AfterEach
-  public void resetCounts() {
-    resetMetrics(); // Metrics is a singleton, so subsequents test runs have wrong counts if we don't clean up.
-  }
-
-  @Test
   @Override
-  public void testCacheSpeedup() {
-    // Ignore this test as cache speedup is a little less than double as asserted in superclass test
+  public WriteConfiguration getConfiguration() {
+    return CosmosStorageSetup.getCosmosGraphConfiguration(model);
   }
 }

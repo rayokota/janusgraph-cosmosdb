@@ -14,13 +14,20 @@
 package io.yokota.janusgraph.graphdb.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
+import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.olap.OLAPTest;
 
-public class CosmosOLAPTest extends OLAPTest {
+public class AbstractCosmosOLAPTest extends OLAPTest {
+
+  protected final BackendDataModel model;
+
+  protected AbstractCosmosOLAPTest(final BackendDataModel model) {
+    this.model = model;
+  }
 
   @Override
   public WriteConfiguration getConfiguration() {
-    return CosmosStorageSetup.getCosmosGraphConfiguration();
+    return CosmosStorageSetup.getCosmosGraphConfiguration(model);
   }
 }

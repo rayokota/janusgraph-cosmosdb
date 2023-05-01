@@ -465,7 +465,7 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
    * <p>
    * This method does nothing and returns immediately if the store supports no scans.
    */
-  //@Test
+  @Test
   @FeatureFlag(feature = JanusGraphFeature.Scan)
   public void scanTest() throws BackendException {
     String[][] values = generateValues();

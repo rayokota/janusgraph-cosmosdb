@@ -96,8 +96,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(getContainer().queryItems(sql,
           new CosmosQueryRequestOptions(), ObjectNode.class));
       // TODO make page size configurable?
-      return new StreamBackedKeyIterator<>(iterable.stream(),
-          new SingleRowStreamInterpreter(query));
+      return new StreamBackedKeyIterator<>(iterable.stream(), new SingleRowStreamInterpreter(query));
     } finally {
       log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query),
           txh);

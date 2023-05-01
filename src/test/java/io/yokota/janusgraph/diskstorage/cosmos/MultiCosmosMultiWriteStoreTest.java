@@ -1,3 +1,4 @@
+// Copyright 2017 JanusGraph Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,9 +19,9 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.junit.jupiter.api.AfterEach;
 
-public class MultiCosmosStoreTest extends AbstractCosmosStoreTest {
+public class MultiCosmosMultiWriteStoreTest extends AbstractCosmosMultiWriteStoreTest {
 
-  public MultiCosmosStoreTest() {
-    super(BackendDataModel.MULTI);
-  }
+    public MultiCosmosMultiWriteStoreTest() {
+        super(BackendDataModel.MULTI);
+    }
 }

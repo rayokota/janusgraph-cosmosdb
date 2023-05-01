@@ -11,17 +11,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.yokota.janusgraph.blueprints;
+package io.yokota.janusgraph.graphdb.cosmos;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
-import org.janusgraph.blueprints.AbstractJanusGraphProvider;
-import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
+import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
+import org.janusgraph.diskstorage.configuration.WriteConfiguration;
+import org.janusgraph.graphdb.JanusGraphPerformanceMemoryTest;
 
-public class CosmosGraphProvider extends AbstractJanusGraphProvider {
+public class AbstractCosmosGraphPerformanceMemoryTest extends JanusGraphPerformanceMemoryTest {
+
+  protected final BackendDataModel model;
+
+  protected AbstractCosmosGraphPerformanceMemoryTest(final BackendDataModel model) {
+    this.model = model;
+  }
 
   @Override
-  public ModifiableConfiguration getJanusGraphConfiguration(String graphName, Class<?> test,
-      String testMethodName) {
-    return CosmosStorageSetup.getCosmosConfiguration(graphName);
+  public WriteConfiguration getConfiguration() {
+    return CosmosStorageSetup.getCosmosGraphConfiguration(model);
   }
 }

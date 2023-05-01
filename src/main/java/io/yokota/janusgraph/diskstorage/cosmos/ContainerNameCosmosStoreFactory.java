@@ -45,6 +45,7 @@ public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
 
     BackendDataModel model = BackendDataModel.valueOf(
         config.get(Constants.STORES_DATA_MODEL, name));
+    log.debug("=== TableNameDynamoDbStoreFactory.create model:{}", model);
     final CosmosKeyColumnValueStore storeBackend = model.createStoreBackend(manager, prefix, name);
     final CosmosKeyColumnValueStore previous = stores.putIfAbsent(name, storeBackend);
     if (null == previous) {
