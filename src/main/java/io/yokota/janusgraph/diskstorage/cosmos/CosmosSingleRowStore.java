@@ -182,18 +182,15 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   public void mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
-    // Ensure the items already exist, as patch will not create the item
-    // (it is not a patch-sert similar to upsert).
-    // If the item already exists, the create will fail, which we ignore.
-    /*
+    // Ensure the items already exist, as patch operations will not create the item
+    // (a patch operation is not a "patch-sert" in the same manner as upsert).
+    // If the item already exists, the create operation will fail, which we ignore.
     List<CosmosItemOperation> createOps = mutations.entrySet().stream()
         .map(entry -> convertToCreate(entry.getKey()))
         .collect(Collectors.toList());
     getContainer().executeBulkOperations(Flux.fromIterable(createOps), new CosmosBulkExecutionOptions())
         .take(createOps.size())
         .blockLast();
-        
-     */
 
     BulkWriter bulkWriter = new BulkWriter(getContainer());
     List<CosmosItemOperation> patchOps = mutations.entrySet().stream()

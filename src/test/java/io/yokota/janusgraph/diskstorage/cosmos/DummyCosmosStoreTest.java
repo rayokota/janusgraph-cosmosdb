@@ -14,11 +14,16 @@
 package io.yokota.janusgraph.diskstorage.cosmos;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
+import java.util.HashSet;
+import java.util.Set;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
+import org.janusgraph.diskstorage.KeyColumn;
 import org.janusgraph.diskstorage.KeyValueStoreUtil;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.KCVSUtil;
@@ -42,7 +47,63 @@ public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
     return KeyValueStoreUtil.generateData(nKeys, nColumns);
   }
 
+  public void checkValueExistence(String[][] values) throws BackendException {
+    checkValueExistence(values, new HashSet<>());
+  }
+
+  public void checkValueExistence(String[][] values, Set<KeyColumn> removed)
+      throws BackendException {
+    for (int i = 0; i < nKeys; i++) {
+      for (int j = 0; j < nColumns; j++) {
+        boolean result = KCVSUtil.containsKeyColumn(store, KeyValueStoreUtil.getBuffer(i),
+            KeyValueStoreUtil.getBuffer(j), tx);
+        if (removed.contains(new KeyColumn(i, j))) {
+          assertFalse(result);
+        } else {
+          assertTrue(result);
+        }
+      }
+    }
+  }
+
+  public void checkValues(String[][] values) throws BackendException {
+    checkValues(values, new HashSet<>());
+  }
+
+  public void checkValues(String[][] values, Set<KeyColumn> removed) throws BackendException {
+    for (int i = 0; i < nKeys; i++) {
+      for (int j = 0; j < nColumns; j++) {
+        StaticBuffer result = KCVSUtil.get(store, KeyValueStoreUtil.getBuffer(i),
+            KeyValueStoreUtil.getBuffer(j), tx);
+        if (removed.contains(new KeyColumn(i, j))) {
+          assertNull(result);
+        } else {
+          assertEquals(values[i][j], KeyValueStoreUtil.getString(result));
+        }
+      }
+    }
+
+  }
+
   @Test
+  public void storeAndRetrieveWithClosing() throws BackendException {
+    String[][] values = generateValues();
+    loadValues(values);
+    clopen();
+    checkValueExistence(values);
+    checkValues(values);
+  }
+
+  //@Test
+  public void storeAndRetrieve() throws BackendException {
+    String[][] values = generateValues();
+    loadValues(values);
+    //print(values);
+    checkValueExistence(values);
+    checkValues(values);
+  }
+
+  //@Test
   public void scanTest() throws BackendException {
     String[][] values = generateValues();
     loadValues(values);
