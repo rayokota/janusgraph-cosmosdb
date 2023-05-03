@@ -45,11 +45,6 @@ public class CosmosStorageSetup extends StorageSetup {
         .set(COSMOS_CLIENT_ENDPOINT, "https://localhost:8081")
         .set(COSMOS_CLIENT_KEY,
             "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==")
-        /*
-        .set(COSMOS_CLIENT_ENDPOINT, "https://47c2e027-0ee0-4-231-b9ee.documents.azure.com:443/")
-        .set(COSMOS_CLIENT_KEY,
-            "6cniqRs5v1bzZwj2QROxuQJJKJBjMmq9xQDxJN8oMawrK3x63eO6Y3xb1Irjom9k4tu6SbCaaTzSACDbvYQKNA==")
-         */
         .set(DROP_ON_CLEAR, false);
 
     if (graphName != null) {
