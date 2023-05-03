@@ -25,14 +25,14 @@ import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 public interface CosmosKeyColumnValueStore extends KeyColumnValueStore {
 
   /**
-   * Creates the KCV store and underlying DynamoDB tables.
+   * Creates the KCV store and underlying Cosmos DB tables.
    *
    * @throws BackendException if unable to ensure the underlying store
    */
   void ensureStore() throws BackendException;
 
   /**
-   * Deletes the KCV store and underlying DynamoDB tables.
+   * Deletes the KCV store and underlying Cosmos DB tables.
    *
    * @throws BackendException if unable to delete the underlying store
    */

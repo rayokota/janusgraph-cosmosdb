@@ -98,11 +98,11 @@ public final class Constants {
           LOCAL, false);
   public static final ConfigOption<String> STORES_DATA_MODEL =
       new ConfigOption<>(COSMOS_STORES_NAMESPACE, "data-model",
-          "SINGLE Means that all the values for a given key are put into a single DynamoDB item. "
+          "SINGLE Means that all the values for a given key are put into a single Cosmos DB item. "
               + "A SINGLE is efficient because all the updates for a single key can be done atomically. "
-              + "However, the trade-off is that DynamoDB has a 400k limit per item so it cannot hold much data. "
-              + "MULTI Means that each 'column' is used as a range key in DynamoDB so a key can span multiple items. "
-              + "A MULTI implementation is slightly less efficient than SINGLE because it must use DynamoDB Query "
+              + "However, the trade-off is that Cosmos DB has a 400k limit per item so it cannot hold much data. "
+              + "MULTI Means that each 'column' is used as a range key in Cosmos DB so a key can span multiple items. "
+              + "A MULTI implementation is slightly less efficient than SINGLE because it must use Cosmos DB Query "
               + "rather than a direct lookup. It is HIGHLY recommended to use MULTI for edgestore unless your graph has "
               + "very low max degree.",
           FIXED, BackendDataModel.UNKNOWN.name());

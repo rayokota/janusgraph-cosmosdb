@@ -25,7 +25,7 @@ import org.janusgraph.diskstorage.util.BufferUtil;
 import org.janusgraph.diskstorage.util.StaticArrayEntry;
 
 /**
- * EntryBuilder is responsible for translating from DynamoDB item maps to Entry objects.
+ * EntryBuilder is responsible for translating from Cosmos DB item maps to Entry objects.
  */
 public class EntryBuilder extends AbstractBuilder {
 

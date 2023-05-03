@@ -22,7 +22,7 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeyIterator;
 import org.janusgraph.diskstorage.util.RecordIterator;
 
 /**
- * KeyIterator that is backed by a DynamoDB scan. This class is ignorant to the fact that its
+ * KeyIterator that is backed by a Cosmos DB scan. This class is ignorant to the fact that its
  * backing scan might be running in parallel. The ScanContextInterpreter is expected to be
  * compatible with whatever scan order the scanner is using.
  */

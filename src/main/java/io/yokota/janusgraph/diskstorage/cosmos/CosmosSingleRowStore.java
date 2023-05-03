@@ -52,11 +52,11 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 /**
- * Acts as if DynamoDB were a Column Oriented Database by using key as the hash key and each entry
- * has their own column. Note that if you are likely to go over the DynamoDB 400kb per item limit
- * you should use DynamoDbStore.
+ * Acts as if Cosmos DB were a Column Oriented Database by using key as the hash key and each entry
+ * has their own column. Note that if you are likely to go over the Cosmos DB 400kb per item limit
+ * you should use CosmosStore.
  * <p>
- * See configuration storage.dynamodb.stores.***store_name***.data-model=SINGLE
+ * See configuration storage.cosmos.stores.***store_name***.data-model=SINGLE
  * <p>
  * KCV Schema - actual table (Hash(S) only):
  * hk   |  0x02  |  0x04    <-Attribute Names

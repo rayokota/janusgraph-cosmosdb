@@ -47,9 +47,9 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 /**
- * Acts as if DynamoDB were a Column Oriented Database by using range query when required.
+ * Acts as if Cosmos DB were a Column Oriented Database by using range query when required.
  * <p>
- * See configuration storage.dynamodb.stores.***table_name***.data-model=MULTI
+ * See configuration storage.cosmos.stores.***table_name***.data-model=MULTI
  * <p>
  * KCV Schema - actual table (Hash(S) + Range(S)):
  * hk(S)  |  rk(S)  |  v(B)  <-Attribute Names
@@ -218,6 +218,6 @@ public class CosmosStore extends AbstractCosmosStore {
 
   @Override
   public String toString() {
-    return "DynamoDBKeyColumnValueStore:" + getContainerName();
+    return "CosmosKeyColumnValueStore:" + getContainerName();
   }
 }

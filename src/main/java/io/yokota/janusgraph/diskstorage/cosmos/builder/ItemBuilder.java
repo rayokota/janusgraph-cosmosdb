@@ -18,7 +18,7 @@ import io.yokota.janusgraph.diskstorage.cosmos.Constants;
 import org.janusgraph.diskstorage.StaticBuffer;
 
 /**
- * ItemBuilder is responsible for translating from StaticBuffers to DynamoDB item maps.
+ * ItemBuilder is responsible for translating from StaticBuffers to Cosmos DB item maps.
  */
 public class ItemBuilder extends AbstractBuilder {
 

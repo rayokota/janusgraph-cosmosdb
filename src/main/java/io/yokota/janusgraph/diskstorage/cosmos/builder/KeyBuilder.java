@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.janusgraph.diskstorage.StaticBuffer;
 
 /**
- * KeyBuilder is responsible for extracting constant string attribute names from DynamoDB item
+ * KeyBuilder is responsible for extracting constant string attribute names from Cosmos DB item
  * maps.
  */
 public class KeyBuilder extends AbstractBuilder {
