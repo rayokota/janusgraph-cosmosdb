@@ -13,12 +13,7 @@
 
 package io.yokota.janusgraph.graphdb.cosmos;
 
-import io.yokota.janusgraph.CosmosStorageSetup;
 import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
-import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.graphdb.JanusGraphOperationCountingTest;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 
 public class SingleCosmosOperationCountingTest extends AbstractCosmosOperationCountingTest {
 

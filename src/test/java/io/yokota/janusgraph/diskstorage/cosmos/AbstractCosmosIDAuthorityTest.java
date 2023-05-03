@@ -21,14 +21,14 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 
 public class AbstractCosmosIDAuthorityTest extends IDAuthorityTest {
 
-    protected final BackendDataModel model;
+  protected final BackendDataModel model;
 
-    protected AbstractCosmosIDAuthorityTest(final BackendDataModel model) {
-        this.model = model;
-    }
+  protected AbstractCosmosIDAuthorityTest(final BackendDataModel model) {
+    this.model = model;
+  }
 
-    @Override
-    public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-        return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration(model));
-    }
+  @Override
+  public KeyColumnValueStoreManager openStorageManager() throws BackendException {
+    return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration(model));
+  }
 }

@@ -19,8 +19,6 @@ import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.en
 import com.azure.cosmos.models.CosmosBulkExecutionOptions;
 import com.azure.cosmos.models.CosmosBulkOperations;
 import com.azure.cosmos.models.CosmosItemOperation;
-import com.azure.cosmos.models.CosmosItemRequestOptions;
-import com.azure.cosmos.models.CosmosItemResponse;
 import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedIterable;
@@ -43,7 +41,6 @@ import org.janusgraph.diskstorage.EntryList;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.KCVMutation;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyIterator;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyRangeQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.KeySliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
@@ -81,8 +78,9 @@ public class CosmosStore extends AbstractCosmosStore {
       String sql = "SELECT * FROM c where c.id >= '" + encodeKey(query.getSliceStart())
           + "' and c.id < '" + encodeKey(query.getSliceEnd())
           + "'";
-      CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(getContainer().queryItems(sql,
-          new CosmosQueryRequestOptions(), ObjectNode.class));
+      CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(
+          getContainer().queryItems(sql,
+              new CosmosQueryRequestOptions(), ObjectNode.class));
       // TODO make page size configurable?
       Stream<List<ObjectNode>> grouped = StreamEx.of(iterable.stream())
           .groupRuns((item1, item2) -> item1.get(Constants.JANUSGRAPH_PARTITION_KEY).textValue()
@@ -148,8 +146,9 @@ public class CosmosStore extends AbstractCosmosStore {
         + "' and c.id < '" + encodeKey(query.getSliceEnd())
         + "'";
 
-    CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(getContainer().queryItems(sql,
-        new CosmosQueryRequestOptions(), ObjectNode.class));
+    CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(
+        getContainer().queryItems(sql,
+            new CosmosQueryRequestOptions(), ObjectNode.class));
     // TODO make page size configurable?
     return iterable.stream()
         .flatMap(item -> {
@@ -197,11 +196,13 @@ public class CosmosStore extends AbstractCosmosStore {
         .blockLast();
   }
 
-  protected List<CosmosItemOperation> convertToOps(StaticBuffer partitionKey, KCVMutation mutation) {
+  protected List<CosmosItemOperation> convertToOps(StaticBuffer partitionKey,
+      KCVMutation mutation) {
     List<CosmosItemOperation> result = new ArrayList<>();
     if (mutation.hasDeletions()) {
       for (StaticBuffer b : mutation.getDeletions()) {
-        result.add(CosmosBulkOperations.getDeleteItemOperation(encodeKey(b), new PartitionKey(encodeKey(partitionKey))));
+        result.add(CosmosBulkOperations.getDeleteItemOperation(encodeKey(b),
+            new PartitionKey(encodeKey(partitionKey))));
       }
     }
 
@@ -212,7 +213,8 @@ public class CosmosStore extends AbstractCosmosStore {
             .columnKey(e.getColumn())
             .value(e.getValue())
             .build();
-        result.add(CosmosBulkOperations.getUpsertItemOperation(item, new PartitionKey(encodeKey(partitionKey))));
+        result.add(CosmosBulkOperations.getUpsertItemOperation(item,
+            new PartitionKey(encodeKey(partitionKey))));
       }
     }
     return result;

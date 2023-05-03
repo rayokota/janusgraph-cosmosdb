@@ -13,12 +13,10 @@
 
 package io.yokota.janusgraph.graphdb.cosmos;
 
-import io.yokota.janusgraph.CosmosStorageSetup;
 import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
-import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.graphdb.JanusGraphPerformanceMemoryTest;
 
-public class SingleCosmosGraphPerformanceMemoryTest extends AbstractCosmosGraphPerformanceMemoryTest {
+public class SingleCosmosGraphPerformanceMemoryTest extends
+    AbstractCosmosGraphPerformanceMemoryTest {
 
   public SingleCosmosGraphPerformanceMemoryTest() {
     super(BackendDataModel.SINGLE);

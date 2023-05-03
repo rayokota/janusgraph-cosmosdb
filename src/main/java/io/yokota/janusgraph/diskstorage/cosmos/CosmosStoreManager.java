@@ -17,9 +17,7 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 import com.azure.cosmos.ConsistencyLevel;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncDatabase;
-import com.azure.cosmos.CosmosClient;
 import com.azure.cosmos.CosmosClientBuilder;
-import com.azure.cosmos.CosmosDatabase;
 import com.azure.cosmos.models.CosmosDatabaseRequestOptions;
 import com.azure.cosmos.models.CosmosDatabaseResponse;
 import com.google.common.base.Preconditions;
@@ -109,7 +107,8 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     log.info("Create database " + databaseName + " if not exists.");
 
     // Create database if not exists
-    Mono<CosmosDatabaseResponse> databaseIfNotExists = client.createDatabaseIfNotExists(databaseName);
+    Mono<CosmosDatabaseResponse> databaseIfNotExists = client.createDatabaseIfNotExists(
+        databaseName);
     databaseIfNotExists.flatMap(databaseResponse -> {
       database = client.getDatabase(databaseResponse.getProperties().getId());
       log.info("Checking database " + database.getId() + " completed!\n");

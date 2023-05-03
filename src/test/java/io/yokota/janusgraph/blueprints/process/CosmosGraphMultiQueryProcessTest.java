@@ -23,4 +23,5 @@ import org.junit.runner.RunWith;
 @RunWith(ProcessStandardSuite.class)
 @GraphProviderClass(provider = CosmosGraphMultiQueryGraphProvider.class, graph = JanusGraph.class)
 public class CosmosGraphMultiQueryProcessTest {
+
 }

@@ -38,9 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
-import one.util.streamex.StreamEx;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.EntryList;
@@ -100,10 +98,12 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
           txh);
 
       String sql = "SELECT * FROM c";
-      CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(getContainer().queryItems(sql,
-          new CosmosQueryRequestOptions(), ObjectNode.class));
+      CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(
+          getContainer().queryItems(sql,
+              new CosmosQueryRequestOptions(), ObjectNode.class));
       // TODO make page size configurable?
-      return new StreamBackedKeyIterator<>(iterable.stream(), new SingleRowStreamInterpreter(query));
+      return new StreamBackedKeyIterator<>(iterable.stream(),
+          new SingleRowStreamInterpreter(query));
     } finally {
       log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query),
           txh);
@@ -194,7 +194,8 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     List<CosmosItemOperation> createOps = mutations.entrySet().stream()
         .map(entry -> convertToCreate(entry.getKey()))
         .collect(Collectors.toList());
-    getContainer().executeBulkOperations(Flux.fromIterable(createOps), new CosmosBulkExecutionOptions())
+    getContainer().executeBulkOperations(Flux.fromIterable(createOps),
+            new CosmosBulkExecutionOptions())
         .take(createOps.size())
         .blockLast();
 

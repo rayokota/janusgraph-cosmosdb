@@ -22,22 +22,22 @@ import org.junit.jupiter.api.AfterEach;
 
 public class AbstractCosmosMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
 
-    protected final BackendDataModel model;
+  protected final BackendDataModel model;
 
-    protected AbstractCosmosMultiWriteStoreTest(final BackendDataModel model) {
-        this.model = model;
-    }
+  protected AbstractCosmosMultiWriteStoreTest(final BackendDataModel model) {
+    this.model = model;
+  }
 
-    @Override
-    public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-        return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration(model));
-    }
+  @Override
+  public KeyColumnValueStoreManager openStorageManager() throws BackendException {
+    return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration(model));
+  }
 
-    @AfterEach
-    public void tearDown() throws Exception {
-        if (null != this.manager) {
-            this.manager.clearStorage();
-        }
-        super.tearDown();
+  @AfterEach
+  public void tearDown() throws Exception {
+    if (null != this.manager) {
+      this.manager.clearStorage();
     }
+    super.tearDown();
+  }
 }

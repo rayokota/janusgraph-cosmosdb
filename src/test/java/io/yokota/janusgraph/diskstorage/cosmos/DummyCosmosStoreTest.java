@@ -46,7 +46,8 @@ public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
 
   @Override
   public KeyColumnValueStoreManager openStorageManager() throws BackendException {
-    return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration(BackendDataModel.SINGLE));
+    return new CosmosStoreManager(
+        CosmosStorageSetup.getCosmosConfiguration(BackendDataModel.SINGLE));
   }
 
   static int nKeys = 100;
@@ -56,7 +57,8 @@ public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
     return KeyValueStoreUtil.generateData(nKeys, nColumns);
   }
 
-  public static void loadAndCheck(KeyColumnValueStore store, StoreTransaction tx, String[][] values, int shiftEveryNthRow,
+  public static void loadAndCheck(KeyColumnValueStore store, StoreTransaction tx, String[][] values,
+      int shiftEveryNthRow,
       int shiftSliceLength) throws BackendException {
     for (int i = 0; i < values.length; i++) {
 

@@ -14,14 +14,9 @@
 
 package io.yokota.janusgraph.diskstorage.cosmos;
 
-import io.yokota.janusgraph.CosmosStorageSetup;
-import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
-import org.junit.jupiter.api.AfterEach;
-
 public class MultiCosmosMultiWriteStoreTest extends AbstractCosmosMultiWriteStoreTest {
 
-    public MultiCosmosMultiWriteStoreTest() {
-        super(BackendDataModel.MULTI);
-    }
+  public MultiCosmosMultiWriteStoreTest() {
+    super(BackendDataModel.MULTI);
+  }
 }

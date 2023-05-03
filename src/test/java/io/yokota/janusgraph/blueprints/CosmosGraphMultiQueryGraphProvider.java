@@ -20,9 +20,11 @@ import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
 
 public class CosmosGraphMultiQueryGraphProvider extends AbstractJanusGraphProvider {
-    @Override
-    public ModifiableConfiguration getJanusGraphConfiguration(String graphName, Class<?> test, String testMethodName) {
-        return CosmosStorageSetup.getCosmosConfiguration(graphName)
-            .set(GraphDatabaseConfiguration.USE_MULTIQUERY, true);
-    }
+
+  @Override
+  public ModifiableConfiguration getJanusGraphConfiguration(String graphName, Class<?> test,
+      String testMethodName) {
+    return CosmosStorageSetup.getCosmosConfiguration(graphName)
+        .set(GraphDatabaseConfiguration.USE_MULTIQUERY, true);
+  }
 }

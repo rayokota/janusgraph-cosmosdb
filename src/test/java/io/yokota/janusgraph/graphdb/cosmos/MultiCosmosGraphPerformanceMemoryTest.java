@@ -15,7 +15,8 @@ package io.yokota.janusgraph.graphdb.cosmos;
 
 import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 
-public class MultiCosmosGraphPerformanceMemoryTest extends AbstractCosmosGraphPerformanceMemoryTest {
+public class MultiCosmosGraphPerformanceMemoryTest extends
+    AbstractCosmosGraphPerformanceMemoryTest {
 
   public MultiCosmosGraphPerformanceMemoryTest() {
     super(BackendDataModel.MULTI);

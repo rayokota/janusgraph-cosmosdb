@@ -14,13 +14,9 @@
 
 package io.yokota.janusgraph.diskstorage.cosmos;
 
-import io.yokota.janusgraph.CosmosStorageSetup;
-import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
-
 public class MultiCosmosIDAuthorityTest extends AbstractCosmosIDAuthorityTest {
 
-    public MultiCosmosIDAuthorityTest() {
-        super(BackendDataModel.MULTI);
-    }
+  public MultiCosmosIDAuthorityTest() {
+    super(BackendDataModel.MULTI);
+  }
 }

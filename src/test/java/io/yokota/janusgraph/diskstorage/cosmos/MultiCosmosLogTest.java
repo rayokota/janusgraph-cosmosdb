@@ -13,10 +13,6 @@
 
 package io.yokota.janusgraph.diskstorage.cosmos;
 
-import io.yokota.janusgraph.CosmosStorageSetup;
-import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
-
 public class MultiCosmosLogTest extends AbstractCosmosLogTest {
 
   public MultiCosmosLogTest() {

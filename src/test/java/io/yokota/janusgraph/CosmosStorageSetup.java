@@ -22,7 +22,6 @@ import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.ST
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.buildGraphConfiguration;
 
 import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
-import io.yokota.janusgraph.diskstorage.cosmos.Constants;
 import org.janusgraph.StorageSetup;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
@@ -38,7 +37,8 @@ public class CosmosStorageSetup extends StorageSetup {
     return getCosmosConfiguration(null, model);
   }
 
-  public static ModifiableConfiguration getCosmosConfiguration(final String graphName, final BackendDataModel model) {
+  public static ModifiableConfiguration getCosmosConfiguration(final String graphName,
+      final BackendDataModel model) {
     ModifiableConfiguration config = buildGraphConfiguration()
         .set(STORAGE_BACKEND, "io.yokota.janusgraph.diskstorage.cosmos.CosmosStoreManager")
         .set(STORES_DATA_MODEL_DEFAULT, model.name())

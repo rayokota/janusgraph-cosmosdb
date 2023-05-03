@@ -142,21 +142,21 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
   }
 
   public void close() throws BackendException {
-      if (tx != null) {
-          tx.commit();
-      }
-      if (null != store) {
-          store.close();
-      }
-      if (null != manager) {
-          manager.close();
-      }
+    if (tx != null) {
+      tx.commit();
+    }
+    if (null != store) {
+      store.close();
+    }
+    if (null != manager) {
+      manager.close();
+    }
   }
 
   public void newTx() throws BackendException {
-      if (tx != null) {
-          tx.commit();
-      }
+    if (tx != null) {
+      tx.commit();
+    }
     tx = startTx();
   }
 
@@ -680,17 +680,17 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
     tx.rollback();
     tx = startTx();
     List<Entry> entries;
-      if (limit <= 0) {
-          entries = store.getSlice(
-              new KeySliceQuery(KeyValueStoreUtil.getBuffer(key),
-                  KeyValueStoreUtil.getBuffer(start),
-                  KeyValueStoreUtil.getBuffer(end)), tx);
-      } else {
-          entries = store.getSlice(
-              new KeySliceQuery(KeyValueStoreUtil.getBuffer(key),
-                  KeyValueStoreUtil.getBuffer(start),
-                  KeyValueStoreUtil.getBuffer(end)).setLimit(limit), tx);
-      }
+    if (limit <= 0) {
+      entries = store.getSlice(
+          new KeySliceQuery(KeyValueStoreUtil.getBuffer(key),
+              KeyValueStoreUtil.getBuffer(start),
+              KeyValueStoreUtil.getBuffer(end)), tx);
+    } else {
+      entries = store.getSlice(
+          new KeySliceQuery(KeyValueStoreUtil.getBuffer(key),
+              KeyValueStoreUtil.getBuffer(start),
+              KeyValueStoreUtil.getBuffer(end)).setLimit(limit), tx);
+    }
 
     int pos = 0;
     for (int i = start; i < end; i++) {
@@ -711,11 +711,11 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
       pos++;
     }
     assertNotNull(entries);
-      if (limit > 0 && pos > limit) {
-          assertEquals(limit, entries.size());
-      } else {
-          assertEquals(pos, entries.size());
-      }
+    if (limit > 0 && pos > limit) {
+      assertEquals(limit, entries.size());
+    } else {
+      assertEquals(pos, entries.size());
+    }
   }
 
   //@Test
@@ -1016,9 +1016,9 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
 
   //@Test
   public void testGetSlices() throws Exception {
-      if (!manager.getFeatures().hasMultiQuery()) {
-          return;
-      }
+    if (!manager.getFeatures().hasMultiQuery()) {
+      return;
+    }
 
     populateDBWith100Keys();
 
@@ -1234,9 +1234,9 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
     String[][] values = KeyValueStoreUtil.generateData(keys, columns);
     //Make it only half the number of columns for every 2nd key
     for (int i = 0; i < values.length; i++) {
-        if (i % 2 == 0) {
-            values[i] = Arrays.copyOf(values[i], columns / 2);
-        }
+      if (i % 2 == 0) {
+        values[i] = Arrays.copyOf(values[i], columns / 2);
+      }
     }
     log.debug("Loading values: " + keys + "x" + columns);
     loadValues(values);

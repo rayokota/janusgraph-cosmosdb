@@ -13,23 +13,7 @@
 
 package io.yokota.janusgraph.graphdb.cosmos;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import io.yokota.janusgraph.CosmosStorageSetup;
 import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import org.janusgraph.core.JanusGraphException;
-import org.janusgraph.core.JanusGraphFactory;
-import org.janusgraph.diskstorage.BackendException;
-import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
-import org.janusgraph.diskstorage.configuration.WriteConfiguration;
-import org.janusgraph.graphdb.JanusGraphTest;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SingleCosmosGraphTest extends AbstractCosmosGraphTest {
 
