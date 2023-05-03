@@ -38,7 +38,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import one.util.streamex.StreamEx;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.EntryList;
@@ -198,7 +200,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
 
     BulkWriter bulkWriter = new BulkWriter(getContainer());
     List<CosmosItemOperation> patchOps = mutations.entrySet().stream()
-            .flatMap(entry -> convertToPatches(encodeKey(entry.getKey()), entry.getValue()).stream())
+        .flatMap(entry -> convertToPatches(encodeKey(entry.getKey()), entry.getValue()).stream())
         .collect(Collectors.toList());
     patchOps.forEach(bulkWriter::scheduleWrites);
     bulkWriter.execute(new CosmosBulkExecutionOptions())

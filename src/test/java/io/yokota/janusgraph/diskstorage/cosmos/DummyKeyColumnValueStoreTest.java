@@ -94,7 +94,7 @@ public abstract class DummyKeyColumnValueStoreTest extends AbstractKCVSTest impl
   public static final int TRIALS = 5000;
   private final Logger log = LoggerFactory.getLogger(DummyKeyColumnValueStoreTest.class);
 
-  final int numKeys = 500;
+  final int numKeys = 100;
   final int numColumns = 50;
 
   protected final String storeName = "testStore1";

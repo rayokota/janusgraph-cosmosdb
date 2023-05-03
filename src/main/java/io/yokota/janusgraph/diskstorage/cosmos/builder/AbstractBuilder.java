@@ -36,6 +36,9 @@ import org.janusgraph.graphdb.database.serialize.StandardSerializer;
  */
 public abstract class AbstractBuilder {
 
+  public static char BASE64_PREFIX = 's';
+  public static char HEX_PREFIX = 'x';
+
   public static String encodeKey(final StaticBuffer input) {
     if (input == null || input.length() == 0) {
       return null;
@@ -43,14 +46,16 @@ public abstract class AbstractBuilder {
     final ByteBuffer buf = input.asByteBuffer();
     final byte[] bytes = new byte[buf.remaining()];
     buf.get(bytes);
-    // use hex to maintain sort order
-    return Hex.encodeHexString(bytes);
+    // Use hex to maintain sort order, prepend an 'x' as otherwise
+    // if the name is numeric, then Cosmos treats the name as an array index in patch operations,
+    // with errors like "Token('0000000000000400') has length longer than expected".
+    return HEX_PREFIX + Hex.encodeHexString(bytes);
   }
 
   public static StaticBuffer decodeKey(final String input) {
     try {
-      // use hex to maintain sort order
-      return new StaticArrayBuffer(Hex.decodeHex(input));
+      // Use hex to maintain sort order, strip the leading 'x'
+      return new StaticArrayBuffer(Hex.decodeHex(input.substring(1)));
     } catch (DecoderException e) {
       throw new RuntimeException(e);
     }
@@ -115,13 +120,13 @@ public abstract class AbstractBuilder {
     final ByteBuffer buf = input.asByteBuffer();
     final byte[] bytes = new byte[buf.remaining()];
     buf.get(bytes);
-    return Base64.encodeBase64String(bytes);
+    return BASE64_PREFIX + Base64.encodeBase64String(bytes);
   }
 
   public static StaticBuffer decodeValue(final String input) {
     if (input == null) {
       return BufferUtil.emptyBuffer();
     }
-    return new StaticArrayBuffer(Base64.decodeBase64(input));
+    return new StaticArrayBuffer(Base64.decodeBase64(input.substring(1)));
   }
 }
