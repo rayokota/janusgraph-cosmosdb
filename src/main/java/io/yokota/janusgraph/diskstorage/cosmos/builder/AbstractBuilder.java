@@ -14,16 +14,12 @@ package io.yokota.janusgraph.diskstorage.cosmos.builder;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.util.BufferUtil;
 import org.janusgraph.diskstorage.util.StaticArrayBuffer;
-import org.janusgraph.diskstorage.util.time.TimestampProviders;
-import org.janusgraph.graphdb.database.serialize.DataOutput;
-import org.janusgraph.graphdb.database.serialize.StandardSerializer;
 
 /**
  * AbstractBuilder is responsible for some of the StaticBuffer to String and visa-versa required for
@@ -54,51 +50,6 @@ public abstract class AbstractBuilder {
     } catch (DecoderException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  // TODO remove
-  public static void main(String[] args) {
-    String s = "ai there";
-    String s2 = "ii there";
-    String s3 = "ji there";
-    String s4 = "ki there";
-    String s5 = "zi there";
-    String k = encodeKey(new StaticArrayBuffer(s.getBytes(StandardCharsets.UTF_8)));
-    String k2 = encodeKey(new StaticArrayBuffer(s2.getBytes(StandardCharsets.UTF_8)));
-    String k3 = encodeKey(new StaticArrayBuffer(s3.getBytes(StandardCharsets.UTF_8)));
-    String k4 = encodeKey(new StaticArrayBuffer(s4.getBytes(StandardCharsets.UTF_8)));
-    String k5 = encodeKey(new StaticArrayBuffer(s5.getBytes(StandardCharsets.UTF_8)));
-    System.out.println(k.compareTo(k2));
-    System.out.println(k2.compareTo(k3));
-    System.out.println(k3.compareTo(k4));
-    System.out.println(k4.compareTo(k5));
-
-    Object x = TimestampProviders.MICRO;
-
-    StaticBuffer sb1 = object2StaticBuffer(x);
-    System.out.println("sb1 " + sb1);
-    String v1 = AbstractBuilder.encodeValue(sb1);
-    System.out.println("v1 " + v1);
-    StaticBuffer sb2 = AbstractBuilder.decodeValue(v1);
-    System.out.println("sb2 " + sb2);
-    Object y = staticBuffer2Object(sb2, TimestampProviders.class);
-
-    System.out.println("*** hi " + y);
-
-
-  }
-
-  private static <O> StaticBuffer object2StaticBuffer(final O value) {
-    StandardSerializer serializer = new StandardSerializer();
-    DataOutput out = serializer.getDataOutput(128);
-    out.writeClassAndObject(value);
-    return out.getStaticBuffer();
-  }
-
-  private static <O> O staticBuffer2Object(final StaticBuffer s, Class<O> dataType) {
-    StandardSerializer serializer = new StandardSerializer();
-    Object value = serializer.readClassAndObject(s.asReadBuffer());
-    return (O) value;
   }
 
   public static StaticBuffer decodeKey(final ObjectNode key, final String name) {

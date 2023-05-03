@@ -17,9 +17,5 @@ import java.util.stream.Stream;
 
 public interface StreamContextInterpreter<T> {
 
-  /**
-   * @param stream
-   * @return
-   */
   Iterator<SingleKeyRecordIterator> buildRecordIterators(Stream<T> stream);
 }

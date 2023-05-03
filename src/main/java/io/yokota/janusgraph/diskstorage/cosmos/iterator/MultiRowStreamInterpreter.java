@@ -55,8 +55,6 @@ public class MultiRowStreamInterpreter implements StreamContextInterpreter<List<
       final String partitionKey = items.get(0).get(Constants.JANUSGRAPH_PARTITION_KEY).textValue();
       final StaticBuffer key = decodeKey(partitionKey);
       final StaticRecordIterator recordIterator = createRecordIterator(items);
-      // TODO remove
-      //return Stream.of(new SingleKeyRecordIterator(key, recordIterator));
       return recordIterator.hasNext()
           ? Stream.of(new SingleKeyRecordIterator(key, recordIterator))
           : Stream.empty();
@@ -66,7 +64,6 @@ public class MultiRowStreamInterpreter implements StreamContextInterpreter<List<
   private StaticRecordIterator createRecordIterator(final List<ObjectNode> items) {
     return new StaticRecordIterator(items.stream()
         .flatMap(item -> {
-          // DynamoDB's between includes the end of the range, but Titan's slice queries expect the end key to be exclusive
           final Entry entry = new EntryBuilder(item)
               .slice(sliceQuery.getSliceStart(), sliceQuery.getSliceEnd())
               .build();

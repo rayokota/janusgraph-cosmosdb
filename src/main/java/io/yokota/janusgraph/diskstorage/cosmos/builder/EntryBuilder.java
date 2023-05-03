@@ -71,7 +71,7 @@ public class EntryBuilder extends AbstractBuilder {
   private boolean ignoreAttribute(String name) {
     return name.equals(Constants.JANUSGRAPH_PARTITION_KEY)
         || name.equals((Constants.JANUSGRAPH_COLUMN_KEY))
-        || name.startsWith("_");  // ignore internal CosmosDB attributes
+        || name.startsWith("_");  // ignore internal Cosmos DB attributes
   }
 
   public Entry build() {
