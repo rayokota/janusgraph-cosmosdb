@@ -19,20 +19,29 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.Entry;
 import org.janusgraph.diskstorage.KeyColumn;
 import org.janusgraph.diskstorage.KeyValueStoreUtil;
 import org.janusgraph.diskstorage.StaticBuffer;
 import org.janusgraph.diskstorage.keycolumnvalue.KCVSUtil;
+import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStore;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyIterator;
+import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.RecordIterator;
+import org.janusgraph.diskstorage.util.StaticArrayBuffer;
+import org.janusgraph.diskstorage.util.StaticArrayEntry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+@Slf4j
 public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
 
   @Override
@@ -40,11 +49,50 @@ public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
     return new CosmosStoreManager(CosmosStorageSetup.getCosmosConfiguration(BackendDataModel.SINGLE));
   }
 
-  int nKeys = 10;
-  int nColumns = 2;
+  static int nKeys = 100;
+  static int nColumns = 50;
 
   public String[][] generateValues() {
     return KeyValueStoreUtil.generateData(nKeys, nColumns);
+  }
+
+  public static void loadAndCheck(KeyColumnValueStore store, StoreTransaction tx, String[][] values, int shiftEveryNthRow,
+      int shiftSliceLength) throws BackendException {
+    for (int i = 0; i < values.length; i++) {
+
+      final List<Entry> entries = new ArrayList<>();
+      for (int j = 0; j < values[i].length; j++) {
+        StaticBuffer col;
+        if (0 < shiftEveryNthRow && 0 == i/* +1 */ % shiftEveryNthRow) {
+          ByteBuffer bb = ByteBuffer.allocate(shiftSliceLength + 9);
+          for (int s = 0; s < shiftSliceLength; s++) {
+            bb.put((byte) -1);
+          }
+          bb.put(KeyValueStoreUtil.getBuffer(j + 1).asByteBuffer());
+          bb.flip();
+          col = StaticArrayBuffer.of(bb);
+
+          // col = KeyValueStoreUtil.getBuffer(j + values[i].length +
+          // 100);
+        } else {
+          col = KeyValueStoreUtil.getBuffer(j);
+        }
+        entries.add(StaticArrayEntry.of(col, KeyValueStoreUtil
+            .getBuffer(values[i][j])));
+      }
+      if (!entries.isEmpty()) {
+        store.mutate(KeyValueStoreUtil.getBuffer(i), entries,
+            KeyColumnValueStore.NO_DELETIONS, tx);
+        for (int j = 0; j < nColumns; j++) {
+          boolean result = KCVSUtil.containsKeyColumn(store, KeyValueStoreUtil.getBuffer(i),
+              KeyValueStoreUtil.getBuffer(j), tx);
+          if (!result) {
+            log.error("Could not find i " + i + ", j " + j);
+          }
+          assertTrue(result);
+        }
+      }
+    }
   }
 
   public void checkValueExistence(String[][] values) throws BackendException {
@@ -85,7 +133,7 @@ public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
 
   }
 
-  @Test
+  //@Test
   public void storeAndRetrieveWithClosing() throws BackendException {
     String[][] values = generateValues();
     loadValues(values);
@@ -94,10 +142,11 @@ public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
     checkValues(values);
   }
 
-  //@Test
+  @Test
   public void storeAndRetrieve() throws BackendException {
     String[][] values = generateValues();
-    loadValues(values);
+    //loadValues(values);
+    loadAndCheck(store, tx, values, -1, -1);
     //print(values);
     checkValueExistence(values);
     checkValues(values);

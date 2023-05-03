@@ -14,7 +14,9 @@ import com.azure.cosmos.models.CosmosBulkExecutionOptions;
 import com.azure.cosmos.models.CosmosBulkItemResponse;
 import com.azure.cosmos.models.CosmosBulkOperationResponse;
 import com.azure.cosmos.models.CosmosItemOperation;
+import java.time.Duration;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
@@ -71,7 +73,8 @@ public class BulkWriter {
         .executeBulkOperations(
             bulkInputEmitter.asFlux(),
             bulkOptions)
-        .publishOn(Schedulers.boundedElastic()).map(bulkOperationResponse -> {
+        .publishOn(Schedulers.boundedElastic())
+        .map(bulkOperationResponse -> {
           processBulkOperationResponse(
               bulkOperationResponse.getResponse(),
               bulkOperationResponse.getOperation(),

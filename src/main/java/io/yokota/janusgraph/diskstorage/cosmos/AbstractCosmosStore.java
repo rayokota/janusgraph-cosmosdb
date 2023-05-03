@@ -203,12 +203,12 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
   }
 
   protected String encodeForLog(final SliceQuery query) {
-    return "slice[id:" + encodeKeyForLog(query.getSliceStart()) + " -> " + encodeKeyForLog(
+    return "slice[rk:" + encodeKeyForLog(query.getSliceStart()) + " -> " + encodeKeyForLog(
         query.getSliceEnd()) + " limit:" + query.getLimit() + "]";
   }
 
   protected String encodeForLog(final KeySliceQuery query) {
-    return "keyslice[pk:" + encodeKeyForLog(query.getKey()) + " " + "id:" + encodeKeyForLog(
+    return "keyslice[pk:" + encodeKeyForLog(query.getKey()) + " " + "rk:" + encodeKeyForLog(
         query.getSliceStart()) + " -> " + encodeKeyForLog(query.getSliceEnd()) + " limit:"
         + query.getLimit() + "]";
   }
