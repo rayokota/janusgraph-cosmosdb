@@ -19,7 +19,7 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.configuration.Configuration;
 
 /**
- * Creates backend store based on table name.
+ * Creates backend store based on container name.
  */
 @Slf4j
 public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
@@ -35,15 +35,15 @@ public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
   @Override
   public CosmosKeyColumnValueStore create(final CosmosStoreManager manager, final String prefix,
       final String name) throws BackendException {
-    log.debug("==> TableNameDynamoDbStoreFactory.create prefix:{} name:{}", prefix, name);
-    // ensure there is only one instance used per table name.
+    log.debug("==> ContainerNameCosmosStoreFactory.create prefix:{} name:{}", prefix, name);
+    // ensure there is only one instance used per container name.
 
     BackendDataModel model = BackendDataModel.valueOf(
         config.get(Constants.STORES_DATA_MODEL, name));
     if (model == BackendDataModel.UNKNOWN) {
       model = BackendDataModel.valueOf(config.get(Constants.STORES_DATA_MODEL_DEFAULT));
     }
-    log.debug("=== TableNameDynamoDbStoreFactory.create model:{}", model);
+    log.debug("=== ContainerNameCosmosStoreFactory.create model:{}", model);
     final CosmosKeyColumnValueStore storeBackend = model.createStoreBackend(manager, prefix, name);
     final CosmosKeyColumnValueStore previous = stores.putIfAbsent(name, storeBackend);
     if (null == previous) {
@@ -54,7 +54,7 @@ public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
       }
     }
     final CosmosKeyColumnValueStore store = stores.get(name);
-    log.debug("<== TableNameDynamoDbStoreFactory.create prefix:{} name:{} returning:{}", prefix,
+    log.debug("<== ContainerNameCosmosStoreFactory.create prefix:{} name:{} returning:{}", prefix,
         name, store);
     return store;
   }

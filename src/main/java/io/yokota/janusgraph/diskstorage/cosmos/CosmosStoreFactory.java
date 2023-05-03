@@ -15,18 +15,18 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 import org.janusgraph.diskstorage.BackendException;
 
 /**
- * Creates a backend store for a given table name.
+ * Creates a backend store for a given container name.
  */
 public interface CosmosStoreFactory {
 
   /**
-   * Creates a backend store for a given table name.
+   * Creates a backend store for a given container name.
    *
-   * @param prefix the prefix of the table name. For example if prefix was foo and name was bar, the
-   *               full table name would be foo_bar. The prefix is shared by all stores created by a
+   * @param prefix the prefix of the container name. For example if prefix was foo and name was bar, the
+   *               full container name would be foo_bar. The prefix is shared by all stores created by a
    *               factory.
    * @param name   the name of the KCVStore, without the prefix.
-   * @return a KCVStore with the given name and table prefix
+   * @return a KCVStore with the given name and container prefix
    * @throws BackendException if unable to create the store
    */
   CosmosKeyColumnValueStore create(CosmosStoreManager manager, String prefix, String name)

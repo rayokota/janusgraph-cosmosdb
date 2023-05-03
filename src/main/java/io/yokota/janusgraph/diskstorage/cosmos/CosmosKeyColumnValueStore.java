@@ -40,10 +40,10 @@ public interface CosmosKeyColumnValueStore extends KeyColumnValueStore {
 
   /**
    * Titan relies on static store names to be used, but we want the ability to have multiple graphs
-   * in a single region, so prepend a configurable prefix to the underlying table names of each
-   * graph and get the DynamoDB table name with this method
+   * in a single region, so prepend a configurable prefix to the underlying container names of each
+   * graph and get the Cosmos DB container name with this method
    *
-   * @return the table name corresponding to the KCVStore
+   * @return the container name corresponding to the KCVStore
    */
   String getContainerName();
 
