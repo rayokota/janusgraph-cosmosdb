@@ -48,6 +48,7 @@ import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.StaticArrayEntryList;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -116,7 +117,9 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       String itemId = encodeKey(query.getKey());
       CosmosItemResponse<ObjectNode> response = getContainer()
           .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
-              ObjectNode.class).block();
+              ObjectNode.class)
+          .onErrorResume((exception) -> Mono.empty())
+          .block();
 
       filteredEntries = extractEntriesFromGetItemResult(
           response != null ? response.getItem() : null,
@@ -144,9 +147,11 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
                 String itemId = encodeKey(key);
                 CosmosItemResponse<ObjectNode> response = getContainer()
                     .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
-                        ObjectNode.class).block();
+                        ObjectNode.class)
+                    .onErrorResume((exception) -> Mono.empty())
+                    .block();
                 EntryList entryList = extractEntriesFromGetItemResult(
-                    response.getItem(),
+                    response != null ? response.getItem() : null,
                     query.getSliceStart(), query.getSliceEnd(), query.getLimit());
                 return Tuples.of(key, entryList);
               }
