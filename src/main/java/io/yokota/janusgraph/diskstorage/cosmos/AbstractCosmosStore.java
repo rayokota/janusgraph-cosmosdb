@@ -108,35 +108,19 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
   }
 
   private void createContainerIfNotExists() {
-    log.info("Create container " + containerName + " if not exists.");
+    log.info("Create container {} if not exists.", containerName);
 
-    CosmosAsyncDatabase database = manager.getDatabase();
-    // Create container if not exists
+    //  Create container if not exists
     CosmosContainerProperties containerProperties =
         new CosmosContainerProperties(containerName, "/" + Constants.JANUSGRAPH_PARTITION_KEY);
 
+    // Provision throughput
     ThroughputProperties throughputProperties = ThroughputProperties.createManualThroughput(400);
-    Mono<CosmosContainerResponse> containerIfNotExists =
-        database.createContainerIfNotExists(containerProperties, throughputProperties);
 
-    // Create container with 400 RU/s
-    CosmosContainerResponse cosmosContainerResponse = containerIfNotExists.block();
-    container = database.getContainer(cosmosContainerResponse.getProperties().getId());
-
-    // Modify existing container
-    containerProperties = cosmosContainerResponse.getProperties();
-    Mono<CosmosContainerResponse> propertiesReplace =
-        container.replace(containerProperties, new CosmosContainerRequestOptions());
-    propertiesReplace.flatMap(containerResponse -> {
-      log.info("setupContainer(): Container " + container.getId() + " in " + database.getId() +
-          "has been updated with it's new properties.");
-      return Mono.empty();
-    }).onErrorResume((exception) -> {
-      log.error("setupContainer(): Unable to update properties for container " + container.getId() +
-          " in database " + database.getId() +
-          ". e: " + exception.getLocalizedMessage());
-      return Mono.empty();
-    }).block();
+    //  Create container with 400 RU/s
+    CosmosAsyncDatabase database = manager.getDatabase();
+    CosmosContainerResponse databaseResponse = database.createContainerIfNotExists(containerProperties, throughputProperties).block();
+    container = database.getContainer(databaseResponse.getProperties().getId());
   }
 
   @Override
