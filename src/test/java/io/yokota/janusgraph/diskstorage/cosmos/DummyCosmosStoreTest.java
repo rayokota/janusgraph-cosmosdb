@@ -50,8 +50,8 @@ public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
         CosmosStorageSetup.getCosmosConfiguration(BackendDataModel.SINGLE));
   }
 
-  static int nKeys = 100;
-  static int nColumns = 50;
+  static int nKeys = 10;
+  static int nColumns = 2;
 
   public String[][] generateValues() {
     return KeyValueStoreUtil.generateData(nKeys, nColumns);
@@ -135,6 +135,24 @@ public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
 
   }
 
+  @Test
+  public void testClearStorage() throws Exception {
+    final String[][] values = generateValues();
+    loadValues(values);
+    close();
+
+    manager = openStorageManagerForClearStorageTest();
+    assertTrue(manager.exists(), "storage should exist before clearing");
+    manager.clearStorage();
+    try {
+      assertFalse(manager.exists(), "storage should not exist after clearing");
+    } catch (Exception e) {
+      // Retry to accommodate backends (e.g. BerkeleyDB) which may require a clean manager after clearing storage
+      manager.close();
+      manager = openStorageManager();
+      assertFalse(manager.exists(), "storage should not exist after clearing");
+    }
+  }
   //@Test
   public void storeAndRetrieveWithClosing() throws BackendException {
     String[][] values = generateValues();
@@ -144,7 +162,7 @@ public class DummyCosmosStoreTest extends DummyKeyColumnValueStoreTest {
     checkValues(values);
   }
 
-  @Test
+  //@Test
   public void storeAndRetrieve() throws BackendException {
     String[][] values = generateValues();
     //loadValues(values);

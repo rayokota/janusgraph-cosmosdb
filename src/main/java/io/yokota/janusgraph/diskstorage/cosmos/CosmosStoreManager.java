@@ -16,6 +16,8 @@ import com.azure.cosmos.ConsistencyLevel;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncDatabase;
 import com.azure.cosmos.CosmosClientBuilder;
+import com.azure.cosmos.models.CosmosContainerProperties;
+import com.azure.cosmos.models.CosmosDatabaseProperties;
 import com.azure.cosmos.models.CosmosDatabaseRequestOptions;
 import com.azure.cosmos.models.CosmosDatabaseResponse;
 import com.google.common.base.Preconditions;
@@ -126,13 +128,19 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     for (CosmosKeyColumnValueStore store : factory.getAllStores()) {
       store.deleteStore();
     }
-    client.getDatabase(databaseName).delete(new CosmosDatabaseRequestOptions());
+    client.getDatabase(databaseName).delete(new CosmosDatabaseRequestOptions())
+        .onErrorResume((exception) -> Mono.empty())
+        .block();
     log.debug("<== clearStorage returning:void");
   }
 
   @Override
   public boolean exists() throws BackendException {
-    return client.readAllDatabases() != null;
+    List<CosmosDatabaseProperties> result = client.queryDatabases(
+        String.format("SELECT * FROM root r where r.id = '%s'", databaseName) , null)
+        .collectList()
+        .block();
+    return !result.isEmpty();
   }
 
   @Override
