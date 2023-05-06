@@ -19,7 +19,7 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.IDAuthorityTest;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 
-public class AbstractCosmosIDAuthorityTest extends IDAuthorityTest {
+public abstract class AbstractCosmosIDAuthorityTest extends IDAuthorityTest {
 
   protected final BackendDataModel model;
 

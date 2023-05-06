@@ -18,7 +18,7 @@ import org.janusgraph.diskstorage.BackendException;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.janusgraph.diskstorage.log.KCVSLogTest;
 
-public class AbstractCosmosLogTest extends KCVSLogTest {
+public abstract class AbstractCosmosLogTest extends KCVSLogTest {
 
   protected final BackendDataModel model;
 

@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AbstractCosmosGraphTest extends JanusGraphTest {
+public abstract class AbstractCosmosGraphTest extends JanusGraphTest {
 
   private static final Logger log =
       LoggerFactory.getLogger(AbstractCosmosGraphTest.class);

@@ -20,7 +20,7 @@ import org.janusgraph.graphdb.JanusGraphOperationCountingTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-public class AbstractCosmosOperationCountingTest extends JanusGraphOperationCountingTest {
+public abstract class AbstractCosmosOperationCountingTest extends JanusGraphOperationCountingTest {
 
   protected final BackendDataModel model;
 

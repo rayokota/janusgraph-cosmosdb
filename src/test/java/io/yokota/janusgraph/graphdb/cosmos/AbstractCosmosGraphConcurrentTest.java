@@ -18,7 +18,7 @@ import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.graphdb.JanusGraphConcurrentTest;
 
-public class AbstractCosmosGraphConcurrentTest extends JanusGraphConcurrentTest {
+public abstract class AbstractCosmosGraphConcurrentTest extends JanusGraphConcurrentTest {
 
   protected final BackendDataModel model;
 

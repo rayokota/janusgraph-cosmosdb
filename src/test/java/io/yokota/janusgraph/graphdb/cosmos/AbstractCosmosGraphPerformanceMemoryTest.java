@@ -18,7 +18,7 @@ import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.graphdb.JanusGraphPerformanceMemoryTest;
 
-public class AbstractCosmosGraphPerformanceMemoryTest extends JanusGraphPerformanceMemoryTest {
+public abstract class AbstractCosmosGraphPerformanceMemoryTest extends JanusGraphPerformanceMemoryTest {
 
   protected final BackendDataModel model;
 

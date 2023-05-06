@@ -20,7 +20,7 @@ import org.janusgraph.diskstorage.MultiWriteKeyColumnValueStoreTest;
 import org.janusgraph.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import org.junit.jupiter.api.AfterEach;
 
-public class AbstractCosmosMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
+public abstract class AbstractCosmosMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
 
   protected final BackendDataModel model;
 

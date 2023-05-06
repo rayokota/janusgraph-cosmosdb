@@ -18,7 +18,7 @@ import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.graphdb.JanusGraphPartitionGraphTest;
 
-public class AbstractCosmosPartitionGraphTest extends JanusGraphPartitionGraphTest {
+public abstract class AbstractCosmosPartitionGraphTest extends JanusGraphPartitionGraphTest {
 
   protected final BackendDataModel model;
 

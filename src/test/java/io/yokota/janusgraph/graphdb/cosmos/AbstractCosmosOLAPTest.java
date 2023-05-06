@@ -18,7 +18,7 @@ import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
 import org.janusgraph.olap.OLAPTest;
 
-public class AbstractCosmosOLAPTest extends OLAPTest {
+public abstract class AbstractCosmosOLAPTest extends OLAPTest {
 
   protected final BackendDataModel model;
 
