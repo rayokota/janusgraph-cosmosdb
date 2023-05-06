@@ -19,9 +19,6 @@ import com.azure.cosmos.models.CosmosBatch;
 import com.azure.cosmos.models.CosmosBatchPatchItemRequestOptions;
 import com.azure.cosmos.models.CosmosBatchRequestOptions;
 import com.azure.cosmos.models.CosmosBatchResponse;
-import com.azure.cosmos.models.CosmosBulkExecutionOptions;
-import com.azure.cosmos.models.CosmosBulkItemRequestOptions;
-import com.azure.cosmos.models.CosmosBulkOperations;
 import com.azure.cosmos.models.CosmosItemOperation;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
 import com.azure.cosmos.models.CosmosItemResponse;
@@ -30,11 +27,11 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.ItemBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.iterator.SingleRowStreamInterpreter;
 import io.yokota.janusgraph.diskstorage.cosmos.iterator.StreamBackedKeyIterator;
-import io.yokota.janusgraph.diskstorage.cosmos.mutation.BulkWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -199,40 +196,40 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     // Ensure the items already exist, as patch operations will not create the item
     // (a patch operation is not a "patch-sert" in the same manner as upsert).
     // If the item already exists, the create operation will fail, which we ignore.
-    /*
-    long ms = System.currentTimeMillis();
-    List<CosmosItemOperation> createOps = mutations.entrySet().stream()
-        .map(entry -> convertToCreate(entry.getKey()))
-        .collect(Collectors.toList());
-    getContainer().executeBulkOperations(Flux.fromIterable(createOps),
-            new CosmosBulkExecutionOptions())
-        .take(createOps.size())
-        .blockLast();
-
-    BulkWriter bulkWriter = new BulkWriter(getContainer());
-    List<CosmosItemOperation> patchOps = mutations.entrySet().stream()
-        .flatMap(entry -> convertToPatches(encodeKey(entry.getKey()), entry.getValue()).stream())
-        .collect(Collectors.toList());
-    patchOps.forEach(bulkWriter::scheduleWrites);
-    bulkWriter.execute(new CosmosBulkExecutionOptions())
-        .take(patchOps.size())
-        .blockLast();
-    long ms2 = System.currentTimeMillis();
-    log.error("mutate " + (ms2 - ms));
-    */
 
     long ms = System.currentTimeMillis();
     Flux.fromIterable(mutations.entrySet())
-        //.parallel()
-        //.runOn(Schedulers.parallel())
-        .map(entry -> executeCreate(entry.getKey(), entry.getValue()))
-        //.sequential()
+        .parallel()
+        .runOn(Schedulers.parallel())
+        .flatMap(entry -> executeCreateAndBatch(entry.getKey(), entry.getValue()))
+        .map(response -> {
+          // Examining if the batch of operations is successful
+          if (response.isSuccessStatusCode()) {
+            log.info("The batch of operations succeeded.");
+          } else {
+            // Iterating over the operation results to find out the error code
+            response.getResults().forEach(result -> {
+              // Failed operation will have a status code of the corresponding error.
+              // All other operations will have a 424 (Failed Dependency) status code.
+              if (result.getStatusCode() != HttpResponseStatus.FAILED_DEPENDENCY.code()) {
+                CosmosItemOperation itemOperation = result.getOperation();
+                log.info("Operation for Item with ID [{}] and Partition Key Value [{}]" +
+                        " failed with a status code [{}], resulting in batch failure.",
+                    itemOperation.getId(),
+                    itemOperation.getPartitionKeyValue(),
+                    result.getStatusCode());
+              }
+            });
+          }
+          return response;
+        })
+        .sequential()
         .blockLast();
     long ms2 = System.currentTimeMillis();
     log.error("mutate " + (ms2 - ms));
   }
 
-  protected Flux<CosmosBatchResponse> executeCreate(StaticBuffer key, KCVMutation mutation) {
+  protected Flux<CosmosBatchResponse> executeCreateAndBatch(StaticBuffer key, KCVMutation mutation) {
     ObjectNode item = new ItemBuilder()
         .partitionKey(key)
         .columnKey(key)
@@ -240,17 +237,18 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     PartitionKey partitionKey = new PartitionKey(encodeKey(key));
     return getContainer().createItem(item, partitionKey, new CosmosItemRequestOptions())
         .onErrorResume(exception -> Mono.empty())
-        .flux()
-        .flatMap(response -> executeBatch(key, mutation));
+        .thenMany(executeBatch(key, mutation));
   }
 
   protected Flux<CosmosBatchResponse> executeBatch(StaticBuffer key, KCVMutation mutation) {
     List<CosmosBatch> batches = convertToBatches(encodeKey(key), mutation);
     return Flux.fromIterable(batches)
-        .flatMap(batch -> getContainer().executeCosmosBatch(batch, new CosmosBatchRequestOptions()));
+        .flatMap(batch ->
+            getContainer().executeCosmosBatch(batch, new CosmosBatchRequestOptions()));
   }
 
   protected List<CosmosBatch> convertToBatches(String key, KCVMutation mutation) {
+    log.error("calling batch");
     PartitionKey partitionKey = new PartitionKey(key);
     List<CosmosBatch> result = new ArrayList<>();
     CosmosBatch batch = CosmosBatch.createCosmosBatch(partitionKey);

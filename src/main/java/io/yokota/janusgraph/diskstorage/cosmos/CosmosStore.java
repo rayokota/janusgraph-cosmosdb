@@ -15,6 +15,7 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
 
 import com.azure.cosmos.models.CosmosBatch;
+import com.azure.cosmos.models.CosmosBatchItemRequestOptions;
 import com.azure.cosmos.models.CosmosBatchRequestOptions;
 import com.azure.cosmos.models.CosmosBatchResponse;
 import com.azure.cosmos.models.CosmosBulkExecutionOptions;
@@ -240,7 +241,7 @@ public class CosmosStore extends AbstractCosmosStore {
     CosmosBatch batch = CosmosBatch.createCosmosBatch(partitionKey);
     if (mutation.hasDeletions()) {
       for (StaticBuffer b : mutation.getDeletions()) {
-        batch.deleteItemOperation(encodeKey(b));
+        batch.deleteItemOperation(encodeKey(b), new CosmosBatchItemRequestOptions());
       }
     }
 
@@ -251,7 +252,7 @@ public class CosmosStore extends AbstractCosmosStore {
             .columnKey(e.getColumn())
             .value(e.getValue())
             .build();
-        batch.upsertItemOperation(item);
+        batch.upsertItemOperation(item, new CosmosBatchItemRequestOptions());
       }
     }
     return getContainer().executeCosmosBatch(batch, new CosmosBatchRequestOptions());

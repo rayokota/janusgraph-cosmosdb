@@ -129,7 +129,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
       store.deleteStore();
     }
     client.getDatabase(databaseName).delete(new CosmosDatabaseRequestOptions())
-        .onErrorResume((exception) -> Mono.empty())
+        .onErrorResume(exception -> Mono.empty())
         .block();
     log.debug("<== clearStorage returning:void");
   }
