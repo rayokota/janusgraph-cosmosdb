@@ -12,6 +12,8 @@
  */
 package io.yokota.janusgraph.diskstorage.cosmos;
 
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.BATCH_SIZE_LIMIT;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.PATCH_SIZE_LIMIT;
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
 
@@ -68,11 +70,6 @@ import reactor.util.function.Tuples;
  */
 @Slf4j
 public class CosmosSingleRowStore extends AbstractCosmosStore {
-
-  // The maximum size of a batch, per the Cosmos DB docs
-  private final static int BATCH_SIZE_LIMIT = 100;
-  // The maximum size of a patch, per the Cosmos DB docs
-  private final static int PATCH_SIZE_LIMIT = 10;
 
   CosmosSingleRowStore(final CosmosStoreManager manager, final String prefix,
       final String storeName) {

@@ -121,9 +121,10 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
 
     //  Create container with 400 RU/s
     CosmosAsyncDatabase database = manager.getDatabase();
-    CosmosContainerResponse databaseResponse =
-        database.createContainerIfNotExists(containerProperties, throughputProperties).block();
-    container = database.getContainer(databaseResponse.getProperties().getId());
+    database.createContainerIfNotExists(containerProperties, throughputProperties)
+        .onErrorResume(exception -> Mono.empty())
+        .block();
+    container = database.getContainer(containerName);
   }
 
   @Override
