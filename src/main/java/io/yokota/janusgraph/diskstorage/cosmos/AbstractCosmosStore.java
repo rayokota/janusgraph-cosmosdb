@@ -104,7 +104,7 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     log.debug("==> deleteStore name:{}", name);
     if (container != null) {
       container.delete(new CosmosContainerRequestOptions())
-          .onErrorResume((exception) -> Mono.empty())
+          .onErrorResume(exception -> Mono.empty())
           .block();
     }
   }

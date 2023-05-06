@@ -15,6 +15,10 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
 
+import com.azure.cosmos.models.CosmosBatch;
+import com.azure.cosmos.models.CosmosBatchPatchItemRequestOptions;
+import com.azure.cosmos.models.CosmosBatchRequestOptions;
+import com.azure.cosmos.models.CosmosBatchResponse;
 import com.azure.cosmos.models.CosmosBulkExecutionOptions;
 import com.azure.cosmos.models.CosmosBulkItemRequestOptions;
 import com.azure.cosmos.models.CosmosBulkOperations;
@@ -49,6 +53,7 @@ import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.StaticArrayEntryList;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -66,6 +71,8 @@ import reactor.util.function.Tuples;
 @Slf4j
 public class CosmosSingleRowStore extends AbstractCosmosStore {
 
+  // The maximum size of a batch, per the Cosmos DB docs
+  private final static int BATCH_SIZE_LIMIT = 100;
   // The maximum size of a patch, per the Cosmos DB docs
   private final static int PATCH_SIZE_LIMIT = 10;
 
@@ -118,7 +125,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       CosmosItemResponse<ObjectNode> response = getContainer()
           .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
               ObjectNode.class)
-          .onErrorResume((exception) -> Mono.empty())
+          .onErrorResume(exception -> Mono.empty())
           .block();
 
       filteredEntries = extractEntriesFromGetItemResult(
@@ -148,7 +155,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
                 CosmosItemResponse<ObjectNode> response = getContainer()
                     .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
                         ObjectNode.class)
-                    .onErrorResume((exception) -> Mono.empty())
+                    .onErrorResume(exception -> Mono.empty())
                     .block();
                 EntryList entryList = extractEntriesFromGetItemResult(
                     response != null ? response.getItem() : null,
@@ -192,6 +199,8 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     // Ensure the items already exist, as patch operations will not create the item
     // (a patch operation is not a "patch-sert" in the same manner as upsert).
     // If the item already exists, the create operation will fail, which we ignore.
+    /*
+    long ms = System.currentTimeMillis();
     List<CosmosItemOperation> createOps = mutations.entrySet().stream()
         .map(entry -> convertToCreate(entry.getKey()))
         .collect(Collectors.toList());
@@ -208,32 +217,59 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     bulkWriter.execute(new CosmosBulkExecutionOptions())
         .take(patchOps.size())
         .blockLast();
+    long ms2 = System.currentTimeMillis();
+    log.error("mutate " + (ms2 - ms));
+    */
+
+    long ms = System.currentTimeMillis();
+    Flux.fromIterable(mutations.entrySet())
+        //.parallel()
+        //.runOn(Schedulers.parallel())
+        .map(entry -> executeCreate(entry.getKey(), entry.getValue()))
+        //.sequential()
+        .blockLast();
+    long ms2 = System.currentTimeMillis();
+    log.error("mutate " + (ms2 - ms));
   }
 
-  protected CosmosItemOperation convertToCreate(StaticBuffer key) {
+  protected Flux<CosmosBatchResponse> executeCreate(StaticBuffer key, KCVMutation mutation) {
     ObjectNode item = new ItemBuilder()
         .partitionKey(key)
         .columnKey(key)
         .build();
-    return CosmosBulkOperations.getCreateItemOperation(
-        item, new PartitionKey(encodeKey(key)), new CosmosBulkItemRequestOptions());
+    PartitionKey partitionKey = new PartitionKey(encodeKey(key));
+    return getContainer().createItem(item, partitionKey, new CosmosItemRequestOptions())
+        .onErrorResume(exception -> Mono.empty())
+        .flux()
+        .flatMap(response -> executeBatch(key, mutation));
   }
 
-  protected List<CosmosItemOperation> convertToPatches(String key, KCVMutation mutation) {
-    List<CosmosItemOperation> result = new ArrayList<>();
-    CosmosPatchOperations patch = CosmosPatchOperations.create();
-    int patchSize = 0;
+  protected Flux<CosmosBatchResponse> executeBatch(StaticBuffer key, KCVMutation mutation) {
+    List<CosmosBatch> batches = convertToBatches(encodeKey(key), mutation);
+    return Flux.fromIterable(batches)
+        .flatMap(batch -> getContainer().executeCosmosBatch(batch, new CosmosBatchRequestOptions()));
+  }
 
-    CosmosBulkItemRequestOptions options = new CosmosBulkItemRequestOptions();
+  protected List<CosmosBatch> convertToBatches(String key, KCVMutation mutation) {
+    PartitionKey partitionKey = new PartitionKey(key);
+    List<CosmosBatch> result = new ArrayList<>();
+    CosmosBatch batch = CosmosBatch.createCosmosBatch(partitionKey);
+    CosmosPatchOperations patch = CosmosPatchOperations.create();
+    int batchSize = 0;
+    int patchSize = 0;
 
     if (mutation.hasDeletions()) {
       for (StaticBuffer b : mutation.getDeletions()) {
         patch.remove("/" + encodeKey(b));
         if (++patchSize == PATCH_SIZE_LIMIT) {
-          result.add(CosmosBulkOperations.getPatchItemOperation(
-              key, new PartitionKey(key), patch, options));
+          batch.patchItemOperation(key, patch, new CosmosBatchPatchItemRequestOptions());
           patch = CosmosPatchOperations.create();
           patchSize = 0;
+          if (++batchSize == BATCH_SIZE_LIMIT) {
+            result.add(batch);
+            batch = CosmosBatch.createCosmosBatch(partitionKey);
+            batchSize = 0;
+          }
         }
       }
     }
@@ -242,18 +278,27 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       for (Entry e : mutation.getAdditions()) {
         patch.add("/" + encodeKey(e.getColumn()), encodeValue(e.getValue()));
         if (++patchSize == PATCH_SIZE_LIMIT) {
-          result.add(CosmosBulkOperations.getPatchItemOperation(
-              key, new PartitionKey(key), patch, options));
+          batch.patchItemOperation(key, patch, new CosmosBatchPatchItemRequestOptions());
           patch = CosmosPatchOperations.create();
           patchSize = 0;
+          if (++batchSize == BATCH_SIZE_LIMIT) {
+            result.add(batch);
+            batch = CosmosBatch.createCosmosBatch(partitionKey);
+            batchSize = 0;
+          }
         }
       }
     }
 
     if (patchSize > 0) {
-      result.add(CosmosBulkOperations.getPatchItemOperation(
-          key, new PartitionKey(key), patch, options));
+      batch.patchItemOperation(key, patch, new CosmosBatchPatchItemRequestOptions());
+      ++batchSize;
     }
+    if (batchSize > 0) {
+      result.add(batch);
+    }
+    log.error("patch size " + patchSize);
+    log.error("batch size " + batchSize);
     return result;
   }
 }

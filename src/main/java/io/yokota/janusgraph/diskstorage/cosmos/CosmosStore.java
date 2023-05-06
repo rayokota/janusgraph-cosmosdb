@@ -14,6 +14,9 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
 
+import com.azure.cosmos.models.CosmosBatch;
+import com.azure.cosmos.models.CosmosBatchRequestOptions;
+import com.azure.cosmos.models.CosmosBatchResponse;
 import com.azure.cosmos.models.CosmosBulkExecutionOptions;
 import com.azure.cosmos.models.CosmosBulkOperations;
 import com.azure.cosmos.models.CosmosItemOperation;
@@ -21,6 +24,7 @@ import com.azure.cosmos.models.CosmosQueryRequestOptions;
 import com.azure.cosmos.models.PartitionKey;
 import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.ItemBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.iterator.MultiRowStreamInterpreter;
@@ -43,6 +47,9 @@ import org.janusgraph.diskstorage.keycolumnvalue.KeySliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 import org.janusgraph.diskstorage.keycolumnvalue.StoreTransaction;
 import org.janusgraph.diskstorage.util.StaticArrayEntryList;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -182,6 +189,8 @@ public class CosmosStore extends AbstractCosmosStore {
   public void mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
+    /*
+    long ms = System.currentTimeMillis();
     BulkWriter bulkWriter = new BulkWriter(getContainer());
     List<CosmosItemOperation> ops = mutations.entrySet().stream()
         .flatMap(entry -> convertToOps(entry.getKey(), entry.getValue()).stream())
@@ -190,30 +199,62 @@ public class CosmosStore extends AbstractCosmosStore {
     bulkWriter.execute(new CosmosBulkExecutionOptions())
         .take(ops.size())
         .blockLast();
+
+     */
+
+    long ms = System.currentTimeMillis();
+    Flux.fromIterable(mutations.entrySet())
+        .parallel()
+        .runOn(Schedulers.parallel())
+        .flatMap(entry -> executeBatch(entry.getKey(), entry.getValue()))
+        .map(response -> {
+          // Examining if the batch of operations is successful
+          if (response.isSuccessStatusCode()) {
+            log.info("The batch of operations succeeded.");
+          } else {
+            // Iterating over the operation results to find out the error code
+            response.getResults().forEach(result -> {
+              // Failed operation will have a status code of the corresponding error.
+              // All other operations will have a 424 (Failed Dependency) status code.
+              if (result.getStatusCode() != HttpResponseStatus.FAILED_DEPENDENCY.code()) {
+                CosmosItemOperation itemOperation = result.getOperation();
+                log.info("Operation for Item with ID [{}] and Partition Key Value [{}]" +
+                         " failed with a status code [{}], resulting in batch failure.",
+                    itemOperation.getId(),
+                    itemOperation.getPartitionKeyValue(),
+                    result.getStatusCode());
+              }
+            });
+          }
+          return response;
+        })
+        .sequential()
+        .blockLast();
+    long ms2 = System.currentTimeMillis();
+    log.error("mutate " + (ms2 - ms));
   }
 
-  protected List<CosmosItemOperation> convertToOps(StaticBuffer partitionKey,
+  protected Mono<CosmosBatchResponse> executeBatch(StaticBuffer key,
       KCVMutation mutation) {
-    List<CosmosItemOperation> result = new ArrayList<>();
+    PartitionKey partitionKey = new PartitionKey(encodeKey(key));
+    CosmosBatch batch = CosmosBatch.createCosmosBatch(partitionKey);
     if (mutation.hasDeletions()) {
       for (StaticBuffer b : mutation.getDeletions()) {
-        result.add(CosmosBulkOperations.getDeleteItemOperation(encodeKey(b),
-            new PartitionKey(encodeKey(partitionKey))));
+        batch.deleteItemOperation(encodeKey(b));
       }
     }
 
     if (mutation.hasAdditions()) {
       for (Entry e : mutation.getAdditions()) {
         ObjectNode item = new ItemBuilder()
-            .partitionKey(partitionKey)
+            .partitionKey(key)
             .columnKey(e.getColumn())
             .value(e.getValue())
             .build();
-        result.add(CosmosBulkOperations.getUpsertItemOperation(item,
-            new PartitionKey(encodeKey(partitionKey))));
+        batch.upsertItemOperation(item);
       }
     }
-    return result;
+    return getContainer().executeCosmosBatch(batch, new CosmosBatchRequestOptions());
   }
 
   @Override

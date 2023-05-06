@@ -18,10 +18,12 @@ import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_KE
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.STORES_DATA_MODEL;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.STORES_DATA_MODEL_DEFAULT;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DROP_ON_CLEAR;
+import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.IDAUTHORITY_WAIT;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_BACKEND;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.buildGraphConfiguration;
 
 import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
+import java.time.Duration;
 import org.janusgraph.StorageSetup;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 import org.janusgraph.diskstorage.configuration.WriteConfiguration;
