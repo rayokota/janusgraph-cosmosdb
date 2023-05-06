@@ -79,9 +79,9 @@ public class CosmosStore extends AbstractCosmosStore {
       log.debug("==> getKeys table:{} query:{} txh:{}", getContainerName(),
           encodeForLog(query), txh);
 
-      String sql = "SELECT * FROM c where c.id >= '" + encodeKey(query.getSliceStart())
-          + "' and c.id < '" + encodeKey(query.getSliceEnd())
-          + "'";
+      String sql = "SELECT * FROM c WHERE c.id >= '" + encodeKey(query.getSliceStart())
+          + "' AND c.id < '" + encodeKey(query.getSliceEnd())
+          + "' ORDER BY c.id";
       CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(
           getContainer().queryItems(sql,
               new CosmosQueryRequestOptions(), ObjectNode.class));
@@ -145,10 +145,10 @@ public class CosmosStore extends AbstractCosmosStore {
   private Stream<Entry> query(final StaticBuffer key, SliceQuery query,
       final StoreTransaction txh) {
     String itemId = encodeKey(key);
-    String sql = "SELECT * FROM c where c.pk = '" + itemId
-        + "' and c.id >= '" + encodeKey(query.getSliceStart())
-        + "' and c.id < '" + encodeKey(query.getSliceEnd())
-        + "'";
+    String sql = "SELECT * FROM c WHERE c.pk = '" + itemId
+        + "' AND c.id >= '" + encodeKey(query.getSliceStart())
+        + "' AND c.id < '" + encodeKey(query.getSliceEnd())
+        + "' ORDER BY c.id";
 
     CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(
         getContainer().queryItems(sql,

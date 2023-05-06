@@ -98,7 +98,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       log.debug("==> getKeys table:{} query:{} txh:{}", getContainerName(), encodeForLog(query),
           txh);
 
-      String sql = "SELECT * FROM c";
+      String sql = "SELECT * FROM c ORDER BY c.id";
       CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(
           getContainer().queryItems(sql,
               new CosmosQueryRequestOptions(), ObjectNode.class));
