@@ -193,10 +193,6 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   public void mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
-    // Ensure the items already exist, as patch operations will not create the item
-    // (a patch operation is not a "patch-sert" in the same manner as upsert).
-    // If the item already exists, the create operation will fail, which we ignore.
-
     long ms = System.currentTimeMillis();
     Flux.fromIterable(mutations.entrySet())
         .parallel()
@@ -235,6 +231,10 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         .columnKey(key)
         .build();
     PartitionKey partitionKey = new PartitionKey(encodeKey(key));
+
+    // Ensure the items already exist, as patch operations will not create the item
+    // (a patch operation is not a "patch-sert" in the same manner as upsert).
+    // If the item already exists, the create operation will fail, which we ignore.
     return getContainer().createItem(item, partitionKey, new CosmosItemRequestOptions())
         .onErrorResume(exception -> Mono.empty())
         .thenMany(executeBatch(key, mutation));
@@ -248,7 +248,6 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   }
 
   protected List<CosmosBatch> convertToBatches(String key, KCVMutation mutation) {
-    log.error("calling batch");
     PartitionKey partitionKey = new PartitionKey(key);
     List<CosmosBatch> result = new ArrayList<>();
     CosmosBatch batch = CosmosBatch.createCosmosBatch(partitionKey);
@@ -295,8 +294,6 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     if (batchSize > 0) {
       result.add(batch);
     }
-    log.error("patch size " + patchSize);
-    log.error("batch size " + batchSize);
     return result;
   }
 }

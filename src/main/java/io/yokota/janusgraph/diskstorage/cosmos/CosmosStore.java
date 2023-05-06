@@ -30,7 +30,6 @@ import io.yokota.janusgraph.diskstorage.cosmos.builder.EntryBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.builder.ItemBuilder;
 import io.yokota.janusgraph.diskstorage.cosmos.iterator.MultiRowStreamInterpreter;
 import io.yokota.janusgraph.diskstorage.cosmos.iterator.StreamBackedKeyIterator;
-import io.yokota.janusgraph.diskstorage.cosmos.mutation.BulkWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -190,19 +189,6 @@ public class CosmosStore extends AbstractCosmosStore {
   public void mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
-    /*
-    long ms = System.currentTimeMillis();
-    BulkWriter bulkWriter = new BulkWriter(getContainer());
-    List<CosmosItemOperation> ops = mutations.entrySet().stream()
-        .flatMap(entry -> convertToOps(entry.getKey(), entry.getValue()).stream())
-        .collect(Collectors.toList());
-    ops.forEach(bulkWriter::scheduleWrites);
-    bulkWriter.execute(new CosmosBulkExecutionOptions())
-        .take(ops.size())
-        .blockLast();
-
-     */
-
     long ms = System.currentTimeMillis();
     Flux.fromIterable(mutations.entrySet())
         .parallel()
