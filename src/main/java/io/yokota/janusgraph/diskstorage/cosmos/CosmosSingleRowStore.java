@@ -16,6 +16,7 @@ import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.en
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
 
 import com.azure.cosmos.models.CosmosBatch;
+import com.azure.cosmos.models.CosmosBatchItemRequestOptions;
 import com.azure.cosmos.models.CosmosBatchPatchItemRequestOptions;
 import com.azure.cosmos.models.CosmosBatchRequestOptions;
 import com.azure.cosmos.models.CosmosBatchResponse;
@@ -193,7 +194,6 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   public void mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
-    long ms = System.currentTimeMillis();
     Flux.fromIterable(mutations.entrySet())
         .parallel()
         .runOn(Schedulers.parallel())
@@ -201,7 +201,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         .map(response -> {
           // Examining if the batch of operations is successful
           if (response.isSuccessStatusCode()) {
-            log.info("The batch of operations succeeded.");
+            log.debug("The batch of operations succeeded.");
           } else {
             // Iterating over the operation results to find out the error code
             response.getResults().forEach(result -> {
@@ -209,7 +209,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
               // All other operations will have a 424 (Failed Dependency) status code.
               if (result.getStatusCode() != HttpResponseStatus.FAILED_DEPENDENCY.code()) {
                 CosmosItemOperation itemOperation = result.getOperation();
-                log.info("Operation for Item with ID [{}] and Partition Key Value [{}]" +
+                log.warn("Operation for Item with ID [{}] and Partition Key Value [{}]" +
                         " failed with a status code [{}], resulting in batch failure.",
                     itemOperation.getId(),
                     itemOperation.getPartitionKeyValue(),
@@ -221,8 +221,6 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         })
         .sequential()
         .blockLast();
-    long ms2 = System.currentTimeMillis();
-    log.error("mutate " + (ms2 - ms));
   }
 
   protected Flux<CosmosBatchResponse> executeCreateAndBatch(StaticBuffer key, KCVMutation mutation) {

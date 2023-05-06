@@ -189,7 +189,6 @@ public class CosmosStore extends AbstractCosmosStore {
   public void mutateMany(
       final Map<StaticBuffer, KCVMutation> mutations, final StoreTransaction txh)
       throws BackendException {
-    long ms = System.currentTimeMillis();
     Flux.fromIterable(mutations.entrySet())
         .parallel()
         .runOn(Schedulers.parallel())
@@ -197,7 +196,7 @@ public class CosmosStore extends AbstractCosmosStore {
         .map(response -> {
           // Examining if the batch of operations is successful
           if (response.isSuccessStatusCode()) {
-            log.info("The batch of operations succeeded.");
+            log.debug("The batch of operations succeeded.");
           } else {
             // Iterating over the operation results to find out the error code
             response.getResults().forEach(result -> {
@@ -205,7 +204,7 @@ public class CosmosStore extends AbstractCosmosStore {
               // All other operations will have a 424 (Failed Dependency) status code.
               if (result.getStatusCode() != HttpResponseStatus.FAILED_DEPENDENCY.code()) {
                 CosmosItemOperation itemOperation = result.getOperation();
-                log.info("Operation for Item with ID [{}] and Partition Key Value [{}]" +
+                log.warn("Operation for Item with ID [{}] and Partition Key Value [{}]" +
                          " failed with a status code [{}], resulting in batch failure.",
                     itemOperation.getId(),
                     itemOperation.getPartitionKeyValue(),
@@ -217,8 +216,6 @@ public class CosmosStore extends AbstractCosmosStore {
         })
         .sequential()
         .blockLast();
-    long ms2 = System.currentTimeMillis();
-    log.error("mutate " + (ms2 - ms));
   }
 
   protected Mono<CosmosBatchResponse> executeBatch(StaticBuffer key,
