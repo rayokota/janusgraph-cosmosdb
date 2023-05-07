@@ -197,7 +197,7 @@ public class CosmosStore extends AbstractCosmosStore {
         .map(response -> {
           // Examining if the batch of operations is successful
           if (response.isSuccessStatusCode()) {
-            log.debug("The batch of operations succeeded.");
+            log.trace("The batch of operations succeeded.");
           } else {
             // Iterating over the operation results to find out the error code
             response.getResults().forEach(result -> {

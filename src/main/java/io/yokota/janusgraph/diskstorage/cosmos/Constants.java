@@ -36,8 +36,9 @@ public final class Constants {
   public static final String JANUSGRAPH_COLUMN_KEY = "id";
   public static final String JANUSGRAPH_VALUE = "v";
   public static final String HEX_PREFIX = "0x";
+  // TODO make configurable
   // The maximum size of a batch, per the Cosmos DB docs
-  public static final int BATCH_SIZE_LIMIT = 100;
+  public static final int BATCH_SIZE_LIMIT = 10;
   // The maximum size of a patch, per the Cosmos DB docs
   public static final int PATCH_SIZE_LIMIT = 10;
 
