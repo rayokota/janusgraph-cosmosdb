@@ -193,7 +193,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       throws BackendException {
     Flux.fromIterable(mutations.entrySet())
         .parallel()
-        .runOn(Schedulers.parallel())
+        .runOn(Schedulers.boundedElastic())
         .flatMap(entry -> executeCreateAndBatch(entry.getKey(), entry.getValue()))
         .map(response -> {
           // Examining if the batch of operations is successful

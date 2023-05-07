@@ -16,6 +16,7 @@ import com.azure.cosmos.ConsistencyLevel;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncDatabase;
 import com.azure.cosmos.CosmosClientBuilder;
+import com.azure.cosmos.DirectConnectionConfig;
 import com.azure.cosmos.models.CosmosContainerProperties;
 import com.azure.cosmos.models.CosmosDatabaseProperties;
 import com.azure.cosmos.models.CosmosDatabaseRequestOptions;
@@ -24,8 +25,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.net.URL;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.janusgraph.diskstorage.BackendException;
@@ -81,13 +85,17 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   public CosmosStoreManager(final Configuration backendConfig) throws BackendException {
     super(backendConfig, getPort(backendConfig));
     try {
+      DirectConnectionConfig directConnectionConfig = DirectConnectionConfig.getDefaultConfig();
+      // TODO use config
+      directConnectionConfig.setConnectTimeout(Duration.ofSeconds(60));
+      directConnectionConfig.setNetworkRequestTimeout(Duration.ofSeconds(10));
       client = new CosmosClientBuilder()
           .endpoint(backendConfig.get(Constants.COSMOS_CLIENT_ENDPOINT))
           // TODO
           .key(backendConfig.get(Constants.COSMOS_CLIENT_KEY))
           //.preferredRegions(preferredRegions)
-          .contentResponseOnWriteEnabled(true)
           .consistencyLevel(ConsistencyLevel.SESSION)
+          .directMode(directConnectionConfig)
           .buildAsyncClient();
     } catch (IllegalArgumentException e) {
       throw new PermanentBackendException("Bad configuration used: " + backendConfig, e);
