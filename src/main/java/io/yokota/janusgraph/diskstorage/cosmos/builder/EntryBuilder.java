@@ -54,7 +54,7 @@ public class EntryBuilder extends AbstractBuilder {
       sliceStartEntry = null;
       sliceEndEntry = null;
     }
-    return Streams.streamOf(item.fields())
+    return item.properties().stream()
         .filter(entry -> !ignoreAttribute(entry.getKey()))
         .map(entry -> {
           final StaticBuffer columnKey = decodeKey(entry.getKey());
