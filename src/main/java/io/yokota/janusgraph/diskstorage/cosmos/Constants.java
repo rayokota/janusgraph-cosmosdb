@@ -52,7 +52,7 @@ public final class Constants {
 
   // Copied from com.azure.cosmos.DirectConnnectionConfig
   private static final Boolean DEFAULT_CONNECTION_ENDPOINT_REDISCOVERY_ENABLED = true;
-  private static final Duration DEFAULT_IDLE_ENDPOINT_TIMEOUT = Duration.ofHours(1l);
+  private static final Duration DEFAULT_IDLE_ENDPOINT_TIMEOUT = Duration.ofHours(1L);
   private static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(5L);
   private static final Duration DEFAULT_NETWORK_REQUEST_TIMEOUT = Duration.ofSeconds(5L);
   private static final Duration MIN_NETWORK_REQUEST_TIMEOUT = Duration.ofSeconds(1L);

@@ -32,7 +32,7 @@ public class StreamBackedKeyIterator<T> implements KeyIterator {
   private final StreamContextInterpreter<T> interpreter;
 
   private SingleKeyRecordIterator current;
-  private Iterator<SingleKeyRecordIterator> recordIterators = Collections.emptyIterator();
+  private Iterator<SingleKeyRecordIterator> recordIterators;
 
   public StreamBackedKeyIterator(final Stream<T> stream,
       final StreamContextInterpreter<T> interpreter) {

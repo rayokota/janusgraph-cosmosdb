@@ -22,7 +22,7 @@ import org.janusgraph.diskstorage.StaticBuffer;
  */
 public class ItemBuilder extends AbstractBuilder {
 
-  private static ObjectMapper MAPPER = new ObjectMapper();
+  private static final ObjectMapper MAPPER = new ObjectMapper();
 
   private final ObjectNode item = MAPPER.createObjectNode();
 

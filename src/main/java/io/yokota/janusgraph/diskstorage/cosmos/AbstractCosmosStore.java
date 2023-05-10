@@ -17,7 +17,6 @@ import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.CosmosAsyncDatabase;
 import com.azure.cosmos.models.CosmosContainerProperties;
 import com.azure.cosmos.models.CosmosContainerRequestOptions;
-import com.azure.cosmos.models.CosmosContainerResponse;
 import com.azure.cosmos.models.ThroughputProperties;
 import java.util.Collections;
 import java.util.List;

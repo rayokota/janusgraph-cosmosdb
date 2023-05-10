@@ -27,8 +27,8 @@ import org.janusgraph.diskstorage.util.StaticArrayBuffer;
  */
 public abstract class AbstractBuilder {
 
-  public static char BASE64_PREFIX = 's';
-  public static char HEX_PREFIX = 'x';
+  public static final char BASE64_PREFIX = 's';
+  public static final char HEX_PREFIX = 'x';
 
   public static String encodeKey(final StaticBuffer input) {
     if (input == null || input.length() == 0) {

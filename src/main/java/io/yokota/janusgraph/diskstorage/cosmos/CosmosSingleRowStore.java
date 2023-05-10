@@ -18,7 +18,6 @@ import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.en
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
 
 import com.azure.cosmos.models.CosmosBatch;
-import com.azure.cosmos.models.CosmosBatchItemRequestOptions;
 import com.azure.cosmos.models.CosmosBatchPatchItemRequestOptions;
 import com.azure.cosmos.models.CosmosBatchRequestOptions;
 import com.azure.cosmos.models.CosmosBatchResponse;
