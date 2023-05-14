@@ -79,14 +79,13 @@ public class CosmosStore extends AbstractCosmosStore {
           + "' AND c.id < '" + encodeKey(query.getSliceEnd())
           + "' ORDER BY c.id";
       CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(
-          getContainer().queryItems(sql,
-              new CosmosQueryRequestOptions(), ObjectNode.class));
+          getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class));
       // TODO make page size configurable?
       Stream<List<ObjectNode>> grouped = StreamEx.of(iterable.stream())
           .groupRuns((item1, item2) -> item1.get(Constants.JANUSGRAPH_PARTITION_KEY).textValue()
               .equals(item2.get(Constants.JANUSGRAPH_PARTITION_KEY).textValue()));
 
-      return new StreamBackedKeyIterator<>(grouped, new MultiRowStreamInterpreter(this, query));
+      return new StreamBackedKeyIterator<>(grouped, new MultiRowStreamInterpreter(query));
     } finally {
       log.debug("<== getKeys table:{} query:{} txh:{}", getContainerName(),
           encodeForLog(query), txh);
@@ -147,8 +146,7 @@ public class CosmosStore extends AbstractCosmosStore {
         + "' ORDER BY c.id";
 
     CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(
-        getContainer().queryItems(sql,
-            new CosmosQueryRequestOptions(), ObjectNode.class));
+        getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class));
     // TODO make page size configurable?
     return iterable.stream()
         .flatMap(item -> {
@@ -258,10 +256,5 @@ public class CosmosStore extends AbstractCosmosStore {
       result.add(batch);
     }
     return result;
-  }
-
-  @Override
-  public String toString() {
-    return "CosmosKeyColumnValueStore:" + getContainerName();
   }
 }

@@ -12,7 +12,6 @@
  */
 package io.yokota.janusgraph.diskstorage.cosmos;
 
-import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncContainer;
 import com.azure.cosmos.CosmosAsyncDatabase;
 import com.azure.cosmos.models.CosmosContainerProperties;
@@ -44,16 +43,14 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
 
-  protected final CosmosAsyncClient client;
-  private final String containerName;
   private final CosmosStoreManager manager;
   private final String name;
+  private final String containerName;
   private CosmosAsyncContainer container;
 
   AbstractCosmosStore(final CosmosStoreManager manager, final String prefix,
       final String storeName) {
     this.manager = manager;
-    this.client = this.manager.getClient();
     this.name = storeName;
     this.containerName = prefix + "_" + storeName;
   }
@@ -167,28 +164,6 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     log.debug("Closing table:{}", containerName);
   }
 
-  String encodeKeyForLog(final StaticBuffer key) {
-    if (null == key) {
-      return "";
-    }
-    return Constants.HEX_PREFIX + Hex.encodeHexString(key.asByteBuffer().array());
-  }
-
-  String encodeForLog(final List<?> columns) {
-    return columns.stream()
-        .map(obj -> {
-          if (obj instanceof StaticBuffer) {
-            return (StaticBuffer) obj;
-          } else if (obj instanceof Entry) {
-            return ((Entry) obj).getColumn();
-          } else {
-            return null;
-          }
-        })
-        .map(this::encodeKeyForLog)
-        .collect(Collectors.joining(",", "[", "]"));
-  }
-
   @Override
   public int hashCode() {
     return containerName.hashCode();
@@ -212,6 +187,28 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
   @Override
   public String toString() {
     return this.getClass().getName() + ":" + getContainerName();
+  }
+
+  String encodeKeyForLog(final StaticBuffer key) {
+    if (null == key) {
+      return "";
+    }
+    return Constants.HEX_PREFIX + Hex.encodeHexString(key.asByteBuffer().array());
+  }
+
+  String encodeForLog(final List<?> columns) {
+    return columns.stream()
+        .map(obj -> {
+          if (obj instanceof StaticBuffer) {
+            return (StaticBuffer) obj;
+          } else if (obj instanceof Entry) {
+            return ((Entry) obj).getColumn();
+          } else {
+            return null;
+          }
+        })
+        .map(this::encodeKeyForLog)
+        .collect(Collectors.joining(",", "[", "]"));
   }
 
   protected String encodeForLog(final SliceQuery query) {

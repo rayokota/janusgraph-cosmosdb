@@ -24,7 +24,6 @@ import org.janusgraph.diskstorage.configuration.Configuration;
 @Slf4j
 public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
 
-
   private final Configuration config;
   private final ConcurrentMap<String, CosmosKeyColumnValueStore> stores = new ConcurrentHashMap<>();
 
@@ -36,7 +35,6 @@ public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
   public CosmosKeyColumnValueStore create(final CosmosStoreManager manager, final String prefix,
       final String name) throws BackendException {
     log.debug("==> ContainerNameCosmosStoreFactory.create prefix:{} name:{}", prefix, name);
-    // ensure there is only one instance used per container name.
 
     BackendDataModel model = BackendDataModel.valueOf(
         config.get(Constants.COSMOS_STORES_DATA_MODEL, name));

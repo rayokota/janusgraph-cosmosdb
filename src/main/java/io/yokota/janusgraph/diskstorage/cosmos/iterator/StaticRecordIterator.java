@@ -54,5 +54,4 @@ public class StaticRecordIterator implements RecordIterator<Entry> {
   public void close() throws IOException {
     delegate = null;
   }
-
 }

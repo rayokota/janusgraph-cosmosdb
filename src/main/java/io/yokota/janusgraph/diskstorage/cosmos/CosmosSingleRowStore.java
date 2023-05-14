@@ -96,8 +96,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
 
       String sql = "SELECT * FROM c ORDER BY c.id";
       CosmosPagedIterable<ObjectNode> iterable = new CosmosPagedIterable<>(
-          getContainer().queryItems(sql,
-              new CosmosQueryRequestOptions(), ObjectNode.class));
+          getContainer().queryItems(sql, new CosmosQueryRequestOptions(), ObjectNode.class));
       // TODO make page size configurable?
       return new StreamBackedKeyIterator<>(iterable.stream(),
           new SingleRowStreamInterpreter(query));

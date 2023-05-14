@@ -28,16 +28,11 @@ import org.janusgraph.diskstorage.util.RecordIterator;
  */
 public class StreamBackedKeyIterator<T> implements KeyIterator {
 
-  private final Stream<T> stream;
-  private final StreamContextInterpreter<T> interpreter;
-
   private SingleKeyRecordIterator current;
   private Iterator<SingleKeyRecordIterator> recordIterators;
 
   public StreamBackedKeyIterator(final Stream<T> stream,
       final StreamContextInterpreter<T> interpreter) {
-    this.stream = stream;
-    this.interpreter = interpreter;
     this.recordIterators = interpreter.buildRecordIterators(stream);
   }
 

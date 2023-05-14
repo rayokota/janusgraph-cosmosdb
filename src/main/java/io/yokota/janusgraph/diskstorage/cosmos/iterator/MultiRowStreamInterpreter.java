@@ -36,12 +36,9 @@ import org.janusgraph.diskstorage.keycolumnvalue.SliceQuery;
 public class MultiRowStreamInterpreter implements StreamContextInterpreter<List<ObjectNode>> {
 
   @NonNull
-  private final CosmosStore store;
-  @NonNull
   private final SliceQuery sliceQuery;
 
-  public MultiRowStreamInterpreter(CosmosStore store, SliceQuery sliceQuery) {
-    this.store = store;
+  public MultiRowStreamInterpreter(SliceQuery sliceQuery) {
     this.sliceQuery = sliceQuery;
   }
 

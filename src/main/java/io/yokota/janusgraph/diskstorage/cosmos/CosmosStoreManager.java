@@ -183,10 +183,6 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     database = client.getDatabase(databaseName);
   }
 
-  public CosmosAsyncClient getClient() {
-    return client;
-  }
-
   public int getBatchSize() {
     return batchSize;
   }
