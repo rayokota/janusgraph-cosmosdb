@@ -134,9 +134,12 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     for (CosmosKeyColumnValueStore store : factory.getAllStores()) {
       store.deleteStore();
     }
+    // TODO remove
+    /*
     client.getDatabase(databaseName).delete(new CosmosDatabaseRequestOptions())
         .onErrorResume(exception -> Mono.empty())
         .block();
+     */
     log.debug("<== clearStorage returning:void");
   }
 

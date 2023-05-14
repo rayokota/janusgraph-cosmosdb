@@ -14,6 +14,7 @@
 package io.yokota.janusgraph.blueprints;
 
 import io.yokota.janusgraph.CosmosStorageSetup;
+import io.yokota.janusgraph.diskstorage.cosmos.BackendDataModel;
 import org.janusgraph.blueprints.AbstractJanusGraphProvider;
 import org.janusgraph.diskstorage.configuration.ModifiableConfiguration;
 
@@ -22,6 +23,6 @@ public class CosmosGraphProvider extends AbstractJanusGraphProvider {
   @Override
   public ModifiableConfiguration getJanusGraphConfiguration(String graphName, Class<?> test,
       String testMethodName) {
-    return CosmosStorageSetup.getCosmosConfiguration(graphName);
+    return CosmosStorageSetup.getCosmosConfiguration(graphName, BackendDataModel.SINGLE);
   }
 }
