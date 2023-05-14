@@ -31,7 +31,6 @@ import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CONSISTEN
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CONTENT_RESPONSE_ON_WRITE;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_DATABASE;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_PREFERRED_REGIONS;
-import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_STORES_THROUGHPUT;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_TABLE_PREFIX;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_USER_AGENT_SUFFIX;
 
