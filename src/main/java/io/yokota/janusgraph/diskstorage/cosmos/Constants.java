@@ -15,6 +15,7 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 import static org.janusgraph.diskstorage.configuration.ConfigOption.Type.FIXED;
 import static org.janusgraph.diskstorage.configuration.ConfigOption.Type.LOCAL;
 
+import com.azure.cosmos.ConsistencyLevel;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import java.time.Duration;
@@ -41,14 +42,6 @@ public final class Constants {
   public static final int BATCH_SIZE_LIMIT = 10;
   // The maximum size of a patch, per the Cosmos DB docs
   public static final int PATCH_SIZE_LIMIT = 10;
-
-
-  public static final List<String> REQUIRED_BACKEND_STORES = ImmutableList.of(
-      Backend.EDGESTORE_NAME,
-      Backend.INDEXSTORE_NAME,
-      Backend.SYSTEM_TX_LOG_NAME,
-      Backend.SYSTEM_MGMT_LOG_NAME,
-      GraphDatabaseConfiguration.SYSTEM_PROPERTIES_STORE_NAME);
 
   // Copied from com.azure.cosmos.DirectConnnectionConfig
   private static final Boolean DEFAULT_CONNECTION_ENDPOINT_REDISCOVERY_ENABLED = true;
@@ -94,14 +87,6 @@ public final class Constants {
       "prefix", "A prefix to put before the JanusGraph table name. "
       + "This allows clients to have multiple graphs on the same AWS Cosmos DB account.",
       LOCAL, "jg");
-  public static final ConfigOption<Boolean> COSMOS_ENABLE_PARALLEL_SCAN =
-      new ConfigOption<>(COSMOS_CONFIGURATION_NAMESPACE, "enable-parallel-scans",
-          "This feature enables scans to run in parallel, which should decrease the total blocking time "
-              + "spent when iterating over large sets of vertices. "
-              + "WARNING: while this feature is enabled JanusGraph's OLAP libraries are NOT supported."
-              + "The JanusGraph-Hadoop implementations of OLAP rely on consistent scan orders across multiple scans, "
-              + "which cannot be guaranteed when scans are run in parallel",
-          LOCAL, false);
   public static final ConfigOption<String> STORES_DATA_MODEL =
       new ConfigOption<>(COSMOS_STORES_NAMESPACE, "data-model",
           "SINGLE Means that all the values for a given key are put into a single Cosmos DB item. "
@@ -116,32 +101,11 @@ public final class Constants {
       new ConfigOption<>(COSMOS_CONFIGURATION_NAMESPACE, "data-model-default",
           "The default data model.",
           FIXED, BackendDataModel.MULTI.name());
-  public static final ConfigOption<Boolean> COSMOS_USE_NATIVE_LOCKING = new ConfigOption<>(
-      COSMOS_CONFIGURATION_NAMESPACE,
-      "native-locking",
-      "Set this to false if you need to use JanusGraph's locking mechanism for remote lock expiry.",
-      FIXED, true);
 
-  public static final ConfigOption<Boolean> COSMOS_FORCE_CONSISTENT_READ =
-      new ConfigOption<>(COSMOS_CONFIGURATION_NAMESPACE, "force-consistent-read",
-          "This feature sets the force consistent read property on Cosmos DB calls.",
-          LOCAL, true);
-  public static final ConfigOption<Long> STORES_INITIAL_CAPACITY_READ =
-      new ConfigOption<>(COSMOS_STORES_NAMESPACE, "initial-capacity-read",
-          "Define the initial read capacity for a given Cosmos DB table.",
-          LOCAL, 4L);
-  public static final ConfigOption<Long> STORES_INITIAL_CAPACITY_WRITE =
-      new ConfigOption<>(COSMOS_STORES_NAMESPACE, "initial-capacity-write",
-          "Define the initial write capacity for a given Cosmos DB table.",
-          LOCAL, 4L);
-  public static final ConfigOption<Double> STORES_READ_RATE_LIMIT =
-      new ConfigOption<>(COSMOS_STORES_NAMESPACE, "read-rate",
-          "The max number of reads per second.",
-          LOCAL, 4.0);
-  public static final ConfigOption<Double> STORES_WRITE_RATE_LIMIT =
-      new ConfigOption<>(COSMOS_STORES_NAMESPACE, "write-rate",
-          "Used to throttle write rate of given table. The max number of writes per second.",
-          LOCAL, 4.0);
+  public static final ConfigOption<String> COSMOS_CONSISTENCY_LEVEL =
+      new ConfigOption<>(COSMOS_CONFIGURATION_NAMESPACE, "consistency-level",
+          "This feature sets the consistency level on Cosmos DB calls.",
+          LOCAL, ConsistencyLevel.SESSION.name());
   public static final ConfigOption<Duration> COSMOS_CLIENT_CONN_TIMEOUT =
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "connection-timeout",
           "The amount of time to wait (in milliseconds) when initially establishing a connection before giving up and timing out.",

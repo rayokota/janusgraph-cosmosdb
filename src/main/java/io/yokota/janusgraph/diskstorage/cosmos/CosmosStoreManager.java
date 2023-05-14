@@ -81,6 +81,8 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   public CosmosStoreManager(final Configuration backendConfig) throws BackendException {
     super(backendConfig, getPort(backendConfig));
     try {
+      ConsistencyLevel consistencyLevel = ConsistencyLevel.valueOf(
+          backendConfig.get(Constants.COSMOS_CONSISTENCY_LEVEL));
       DirectConnectionConfig directConnectionConfig = DirectConnectionConfig.getDefaultConfig();
       // TODO use config
       directConnectionConfig.setConnectTimeout(Duration.ofSeconds(60));
@@ -90,7 +92,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
           // TODO
           .key(backendConfig.get(Constants.COSMOS_CLIENT_KEY))
           //.preferredRegions(preferredRegions)
-          .consistencyLevel(ConsistencyLevel.SESSION)
+          .consistencyLevel(consistencyLevel)
           .directMode(directConnectionConfig)
           .buildAsyncClient();
     } catch (IllegalArgumentException e) {

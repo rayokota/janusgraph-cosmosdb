@@ -44,6 +44,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
 
+  // TODO
   private static final int DEFAULT_COSMOS_RUS = 10000;
 
   protected final CosmosAsyncClient client;
