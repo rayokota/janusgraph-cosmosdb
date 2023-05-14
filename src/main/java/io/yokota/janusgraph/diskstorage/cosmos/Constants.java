@@ -15,6 +15,7 @@ package io.yokota.janusgraph.diskstorage.cosmos;
 import static org.janusgraph.diskstorage.configuration.ConfigOption.Type.FIXED;
 import static org.janusgraph.diskstorage.configuration.ConfigOption.Type.LOCAL;
 
+import com.azure.cosmos.ConnectionMode;
 import com.azure.cosmos.ConsistencyLevel;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
@@ -56,27 +57,17 @@ public final class Constants {
   private static final int DEFAULT_IO_THREAD_PRIORITY = Thread.NORM_PRIORITY;
 
   public static final ConfigNamespace COSMOS_CONFIGURATION_NAMESPACE =
-      new ConfigNamespace(GraphDatabaseConfiguration.STORAGE_NS, "cosmos",
-          "Cosmos DB storage options", false /*isUmbrella*/);
+      new ConfigNamespace(GraphDatabaseConfiguration.STORAGE_NS,
+          "cosmos", "Cosmos DB storage options", false /*isUmbrella*/);
   public static final ConfigNamespace COSMOS_STORES_NAMESPACE =
-      new ConfigNamespace(COSMOS_CONFIGURATION_NAMESPACE, "stores",
-          "Cosmos DB KCV store options", true /*isUmbrella*/);
+      new ConfigNamespace(COSMOS_CONFIGURATION_NAMESPACE,
+          "stores", "Cosmos DB KCV store options", true /*isUmbrella*/);
   public static final ConfigNamespace COSMOS_CLIENT_NAMESPACE =
       new ConfigNamespace(COSMOS_CONFIGURATION_NAMESPACE,
           "client", "Cosmos DB client options", false /*isUmbrella*/);
   public static final ConfigNamespace COSMOS_CLIENT_PROXY_NAMESPACE =
       new ConfigNamespace(COSMOS_CLIENT_NAMESPACE,
           "proxy", "Cosmos DB client proxy options", false /*isUmbrella*/);
-  public static final ConfigNamespace COSMOS_CLIENT_SOCKET_NAMESPACE =
-      new ConfigNamespace(COSMOS_CLIENT_NAMESPACE, "socket", "Cosmos DB client socket options",
-          false /*isUmbrella*/);
-  public static final ConfigNamespace COSMOS_CLIENT_EXECUTOR_NAMESPACE =
-      new ConfigNamespace(COSMOS_CLIENT_NAMESPACE,
-          "executor", "Cosmos DB client executor options", false /*isUmbrella*/);
-  public static final ConfigNamespace COSMOS_CLIENT_CREDENTIALS_NAMESPACE =
-      new ConfigNamespace(COSMOS_CLIENT_NAMESPACE, "credentials",
-          "Cosmos DB client credentials options",
-          false /*isUmbrella*/);
 
   public static final ConfigOption<String> COSMOS_DATABASE = new ConfigOption<>(
       COSMOS_CONFIGURATION_NAMESPACE,
@@ -87,6 +78,10 @@ public final class Constants {
       "prefix", "A prefix to put before the JanusGraph table name. "
       + "This allows clients to have multiple graphs on the same AWS Cosmos DB account.",
       LOCAL, "jg");
+  public static final ConfigOption<String> STORES_DATA_MODEL_DEFAULT = new ConfigOption<>(
+      COSMOS_CONFIGURATION_NAMESPACE,
+      "data-model-default", "The default data model.",
+      FIXED, BackendDataModel.MULTI.name());
   public static final ConfigOption<String> STORES_DATA_MODEL =
       new ConfigOption<>(COSMOS_STORES_NAMESPACE, "data-model",
           "SINGLE Means that all the values for a given key are put into a single Cosmos DB item. "
@@ -97,29 +92,7 @@ public final class Constants {
               + "rather than a direct lookup. It is HIGHLY recommended to use MULTI for edgestore unless your graph has "
               + "very low max degree.",
           FIXED, BackendDataModel.UNKNOWN.name());
-  public static final ConfigOption<String> STORES_DATA_MODEL_DEFAULT =
-      new ConfigOption<>(COSMOS_CONFIGURATION_NAMESPACE, "data-model-default",
-          "The default data model.",
-          FIXED, BackendDataModel.MULTI.name());
 
-  public static final ConfigOption<String> COSMOS_CONSISTENCY_LEVEL =
-      new ConfigOption<>(COSMOS_CONFIGURATION_NAMESPACE, "consistency-level",
-          "This feature sets the consistency level on Cosmos DB calls.",
-          LOCAL, ConsistencyLevel.SESSION.name());
-  public static final ConfigOption<Duration> COSMOS_CLIENT_CONN_TIMEOUT =
-      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "connection-timeout",
-          "The amount of time to wait (in milliseconds) when initially establishing a connection before giving up and timing out.",
-          //
-          LOCAL, DEFAULT_CONNECT_TIMEOUT);
-  public static final ConfigOption<Integer> COSMOS_CLIENT_MAX_CONN =
-      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "connection-max",
-          "The maximum number of allowed open HTTP connections.",
-          LOCAL, DEFAULT_MAX_CONNECTIONS_PER_ENDPOINT);
-  public static final ConfigOption<Integer> COSMOS_CLIENT_MAX_ERROR_RETRY =
-      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "retry-error-max",
-          "The maximum number of retry attempts for failed retryable "
-              + "requests (ex: 5xx error responses from services).",
-          LOCAL, 0);
   public static final ConfigOption<String> COSMOS_CLIENT_ENDPOINT =
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "endpoint",
           "Sets the service endpoint to use for connecting to Cosmos DB.",
@@ -128,19 +101,26 @@ public final class Constants {
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "key",
           "Sets the authentication key for connecting to Cosmos DB.",
           LOCAL, String.class);
-  public static final ConfigOption<String> COSMOS_CLIENT_SIGNING_REGION =
-      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "signing-region",
-          "Sets the signing region to use for signing requests to Cosmos DB. Required.",
-          LOCAL, String.class);
-
-  public static final ConfigOption<String> COSMOS_CLIENT_PROXY_DOMAIN =
-      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "domain",
-          "The optional Windows domain name for configuration an NTLM proxy.",
-          LOCAL, "", Predicates.alwaysTrue());
-  public static final ConfigOption<String> COSMOS_CLIENT_PROXY_WORKSTATION =
-      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "workstation",
-          "The optional Windows workstation name for configuring NTLM proxy support.",
-          LOCAL, "", Predicates.alwaysTrue());
+  public static final ConfigOption<String> COSMOS_CLIENT_CONN_MODE =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "connection-mode",
+          "The connection mode, either DIRECT or GATEWAY.",
+          LOCAL, ConnectionMode.DIRECT.name());
+  public static final ConfigOption<Duration> COSMOS_CLIENT_CONN_TIMEOUT =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "connection-timeout",
+          "The amount of time to wait when initially establishing a connection before giving up and timing out.",
+          LOCAL, DEFAULT_CONNECT_TIMEOUT);
+  public static final ConfigOption<Integer> COSMOS_CLIENT_MAX_CONN =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "connection-max",
+          "The maximum number connections per endpoint.",
+          LOCAL, DEFAULT_MAX_CONNECTIONS_PER_ENDPOINT);
+  public static final ConfigOption<Integer> COSMOS_CLIENT_MAX_REQUESTS =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "request-max",
+          "The maximum number requests per connection.",
+          LOCAL, DEFAULT_MAX_REQUESTS_PER_CONNECTION);
+  public static final ConfigOption<Duration> COSMOS_CLIENT_REQUEST_TIMEOUT =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "request-timeout",
+          "The amount of time to wait for a response.",
+          LOCAL, DEFAULT_NETWORK_REQUEST_TIMEOUT);
   public static final ConfigOption<String> COSMOS_CLIENT_PROXY_HOST =
       new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "host",
           "The optional proxy host the client will connect through.",
@@ -157,61 +137,28 @@ public final class Constants {
       new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "password",
           "The optional proxy password to use when connecting through a proxy.",
           LOCAL, "", Predicates.alwaysTrue());
-
-  public static final ConfigOption<Integer> COSMOS_CLIENT_SOCKET_BUFFER_SEND_HINT =
-      new ConfigOption<>(COSMOS_CLIENT_SOCKET_NAMESPACE, "buffer-send-hint",
-          "The optional size hint (in bytes) for the low level TCP send buffer.",
-          LOCAL, 1048576);
-  public static final ConfigOption<Integer> COSMOS_CLIENT_SOCKET_BUFFER_RECV_HINT =
-      new ConfigOption<>(COSMOS_CLIENT_SOCKET_NAMESPACE, "buffer-recv-hint",
-          "The optional size hints (in bytes) for the low level TCP receive buffer.",
-          LOCAL, 1048576);
-
-  public static final ConfigOption<Integer> COSMOS_CLIENT_EXECUTOR_CORE_POOL_SIZE =
-      new ConfigOption<>(COSMOS_CLIENT_EXECUTOR_NAMESPACE, "core-pool-size",
-          "The core number of threads for the Cosmos DB client.",
-          LOCAL, 25);
-  public static final ConfigOption<Integer> COSMOS_CLIENT_EXECUTOR_MAX_POOL_SIZE =
-      new ConfigOption<>(COSMOS_CLIENT_EXECUTOR_NAMESPACE, "max-pool-size",
+  public static final ConfigOption<Integer> COSMOS_CLIENT_PROXY_MAX_POOL_SIZE =
+      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "max-pool-size",
           "The maximum allowed number of threads for the Cosmos DB client.",
-          LOCAL, 50);
-  public static final ConfigOption<Long> COSMOS_CLIENT_EXECUTOR_KEEP_ALIVE =
-      new ConfigOption<>(COSMOS_CLIENT_EXECUTOR_NAMESPACE, "keep-alive",
-          "The time limit for which threads may remain idle before being terminated for the Cosmos DB client.",
-          LOCAL, 60000L);
-
-  public static final ConfigOption<Integer> COSMOS_CLIENT_EXECUTOR_QUEUE_MAX_LENGTH =
-      new ConfigOption<>(COSMOS_CLIENT_EXECUTOR_NAMESPACE, "max-queue-length",
-          "The maximum size of the executor queue before requests start getting run in the caller.",
-          LOCAL, 1024);
-  public static final ConfigOption<Long> COSMOS_MAX_SELF_THROTTLED_RETRIES =
-      new ConfigOption<>(COSMOS_CONFIGURATION_NAMESPACE, "max-self-throttled-retries",
-          "The max number of retries to use when Cosmos DB throws temporary failure exceptions",
-          LOCAL, 60L);
-  public static final ConfigOption<Long> COSMOS_INITIAL_RETRY_MILLIS =
-      new ConfigOption<>(COSMOS_CONFIGURATION_NAMESPACE, "initial-retry-millis",
-          "The initial retry time (in milliseconds) to use during exponential backoff between Cosmos DB requests",
-          LOCAL, 25L);
-  public static final ConfigOption<Double> COSMOS_CONTROL_PLANE_RATE =
-      new ConfigOption<>(COSMOS_CONFIGURATION_NAMESPACE, "control-plane-rate",
-          "The maximum rate at which control plane requests (CreateTable, UpdateTable, DeleteTable, ListTables, "
-              + "DescribeTable) are issued.",
-          LOCAL, 10.0);
-
-  public static final ConfigOption<Integer> COSMOS_CLIENT_EXECUTOR_MAX_CONCURRENT_OPERATIONS =
-      new ConfigOption<>(COSMOS_CLIENT_EXECUTOR_NAMESPACE, "max-concurrent-operations",
-          "The expected number of threads expected to be using a single TitanGraph instance. "
-              + "Used to allocate threads to batch operations", //
-          LOCAL, 1);
-
-  public static final ConfigOption<String> COSMOS_CREDENTIALS_CLASS_NAME =
-      new ConfigOption<>(COSMOS_CLIENT_CREDENTIALS_NAMESPACE, "class-name",
-          "Specify the fully qualified class that implements AWSCredentialsProvider or AWSCredentials.",
-          LOCAL, "com.amazonaws.auth.BasicAWSCredentials");
-  public static final ConfigOption<String[]> COSMOS_CREDENTIALS_CONSTRUCTOR_ARGS =
-      new ConfigOption<>(COSMOS_CLIENT_CREDENTIALS_NAMESPACE, "constructor-args",
-          "Comma separated list of strings to pass to the credentials constructor.",
-          LOCAL, new String[]{
-          "accessKey", "secretKey"
-      });
+          LOCAL, 1000);
+  public static final ConfigOption<String> COSMOS_CONSISTENCY_LEVEL =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "consistency-level",
+          "This feature sets the consistency level on Cosmos DB calls.",
+          LOCAL, ConsistencyLevel.SESSION.name());
+  public static final ConfigOption<Boolean> COSMOS_CONN_SHARING_ACROSS_CLIENTS =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "connection-sharing-across-clients",
+          "Whether connections are shared across clients.",
+          LOCAL, false);
+  public static final ConfigOption<Boolean> COSMOS_CONTENT_RESPONSE_ON_WRITE =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "content-response-on-write",
+          "Whether to only return header and status code for writes.",
+          LOCAL, false);
+  public static final ConfigOption<String> COSMOS_USER_AGENT_SUFFIX =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "user-agent-suffix",
+          "The value to be appended to the user-agent header.",
+          LOCAL, null);
+  public static final ConfigOption<String[]> COSMOS_PREFERRED_REGIONS =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "preferred-regions",
+          "The preferred regions for geo-replicated accounts.",
+          LOCAL, new String[]{});
 }

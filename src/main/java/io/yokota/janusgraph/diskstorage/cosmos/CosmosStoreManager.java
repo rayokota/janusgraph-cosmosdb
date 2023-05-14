@@ -12,18 +12,42 @@
  */
 package io.yokota.janusgraph.diskstorage.cosmos;
 
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_CONN_MODE;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_CONN_TIMEOUT;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_ENDPOINT;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_KEY;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_MAX_CONN;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_MAX_REQUESTS;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_PROXY_HOST;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_PROXY_MAX_POOL_SIZE;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_PROXY_PASSWORD;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_PROXY_PORT;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_PROXY_USERNAME;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_REQUEST_TIMEOUT;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CONN_SHARING_ACROSS_CLIENTS;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CONSISTENCY_LEVEL;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CONTENT_RESPONSE_ON_WRITE;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_DATABASE;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_PREFERRED_REGIONS;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_TABLE_PREFIX;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_USER_AGENT_SUFFIX;
+
+import com.azure.core.http.ProxyOptions;
+import com.azure.core.http.ProxyOptions.Type;
+import com.azure.cosmos.ConnectionMode;
 import com.azure.cosmos.ConsistencyLevel;
 import com.azure.cosmos.CosmosAsyncClient;
 import com.azure.cosmos.CosmosAsyncDatabase;
 import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.cosmos.DirectConnectionConfig;
+import com.azure.cosmos.GatewayConnectionConfig;
 import com.azure.cosmos.models.CosmosDatabaseProperties;
-import com.azure.cosmos.models.CosmosDatabaseRequestOptions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URL;
-import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import lombok.NonNull;
@@ -62,10 +86,10 @@ public class CosmosStoreManager extends DistributedStoreManager implements
 
   private static int getPort(final Configuration config) throws BackendException {
     final String endpoint = JanusGraphConfigUtil.getNullableConfigValue(config,
-        Constants.COSMOS_CLIENT_ENDPOINT);
+        COSMOS_CLIENT_ENDPOINT);
 
     int port = DEFAULT_PORT;
-    if (endpoint != null && !endpoint.equals(Constants.COSMOS_CLIENT_ENDPOINT.getDefaultValue())) {
+    if (endpoint != null && !endpoint.equals(COSMOS_CLIENT_ENDPOINT.getDefaultValue())) {
       final URL url;
       try {
         url = new URL(endpoint);
@@ -78,30 +102,58 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     return port;
   }
 
-  public CosmosStoreManager(final Configuration backendConfig) throws BackendException {
-    super(backendConfig, getPort(backendConfig));
+  public CosmosStoreManager(final Configuration config) throws BackendException {
+    super(config, getPort(config));
     try {
       ConsistencyLevel consistencyLevel = ConsistencyLevel.valueOf(
-          backendConfig.get(Constants.COSMOS_CONSISTENCY_LEVEL));
-      DirectConnectionConfig directConnectionConfig = DirectConnectionConfig.getDefaultConfig();
-      // TODO use config
-      directConnectionConfig.setConnectTimeout(Duration.ofSeconds(60));
-      directConnectionConfig.setNetworkRequestTimeout(Duration.ofSeconds(10));
-      client = new CosmosClientBuilder()
-          .endpoint(backendConfig.get(Constants.COSMOS_CLIENT_ENDPOINT))
-          // TODO
-          .key(backendConfig.get(Constants.COSMOS_CLIENT_KEY))
-          //.preferredRegions(preferredRegions)
+          config.get(COSMOS_CONSISTENCY_LEVEL));
+      String userAgentSuffix = config.get(COSMOS_USER_AGENT_SUFFIX);
+      String[] preferredRegions = config.get(COSMOS_PREFERRED_REGIONS);
+      CosmosClientBuilder builder = new CosmosClientBuilder()
+          .endpoint(config.get(COSMOS_CLIENT_ENDPOINT))
+          .key(config.get(COSMOS_CLIENT_KEY))
           .consistencyLevel(consistencyLevel)
-          .directMode(directConnectionConfig)
-          .buildAsyncClient();
+          .connectionSharingAcrossClientsEnabled(config.get(COSMOS_CONN_SHARING_ACROSS_CLIENTS))
+          .contentResponseOnWriteEnabled(config.get(COSMOS_CONTENT_RESPONSE_ON_WRITE));
+      ConnectionMode connectionMode = ConnectionMode.valueOf(
+          config.get(COSMOS_CLIENT_CONN_MODE));
+      switch (connectionMode) {
+        case DIRECT:
+          DirectConnectionConfig directConfig = DirectConnectionConfig.getDefaultConfig();
+          directConfig.setConnectTimeout(config.get(COSMOS_CLIENT_CONN_TIMEOUT));
+          directConfig.setMaxConnectionsPerEndpoint(config.get(COSMOS_CLIENT_MAX_CONN));
+          directConfig.setMaxRequestsPerConnection(config.get(COSMOS_CLIENT_MAX_REQUESTS));
+          directConfig.setNetworkRequestTimeout(config.get(COSMOS_CLIENT_REQUEST_TIMEOUT));
+          builder.directMode(directConfig);
+          break;
+        case GATEWAY:
+          GatewayConnectionConfig gatewayConfig = GatewayConnectionConfig.getDefaultConfig();
+          InetSocketAddress address = new InetSocketAddress(
+              config.get(COSMOS_CLIENT_PROXY_HOST), config.get(COSMOS_CLIENT_PROXY_PORT));
+          ProxyOptions proxyOptions = new ProxyOptions(Type.HTTP, address);
+          proxyOptions.setCredentials(
+              config.get(COSMOS_CLIENT_PROXY_USERNAME), config.get(COSMOS_CLIENT_PROXY_PASSWORD));
+          gatewayConfig.setProxy(proxyOptions);
+          gatewayConfig.setMaxConnectionPoolSize(config.get(COSMOS_CLIENT_PROXY_MAX_POOL_SIZE));
+          builder.gatewayMode(gatewayConfig);
+          break;
+        default:
+          throw new IllegalArgumentException();
+      }
+      if (userAgentSuffix != null) {
+        builder.userAgentSuffix(userAgentSuffix);
+      }
+      if (preferredRegions.length > 0) {
+        builder.preferredRegions(Arrays.asList(preferredRegions));
+      }
+      client= builder.buildAsyncClient();
     } catch (IllegalArgumentException e) {
-      throw new PermanentBackendException("Bad configuration used: " + backendConfig, e);
+      throw new PermanentBackendException("Bad configuration used: " + config, e);
     }
-    databaseName = backendConfig.get(Constants.COSMOS_DATABASE);
-    prefix = backendConfig.get(Constants.COSMOS_TABLE_PREFIX);
-    factory = new ContainerNameCosmosStoreFactory(backendConfig);
-    features = initializeFeatures(backendConfig);
+    databaseName = config.get(COSMOS_DATABASE);
+    prefix = config.get(COSMOS_TABLE_PREFIX);
+    factory = new ContainerNameCosmosStoreFactory(config);
+    features = initializeFeatures(config);
     createDatabaseIfNotExists();
     while (!exists()) {
       createDatabaseIfNotExists();
