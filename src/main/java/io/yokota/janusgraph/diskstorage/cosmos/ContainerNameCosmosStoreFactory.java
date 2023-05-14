@@ -48,11 +48,7 @@ public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
     final CosmosKeyColumnValueStore store = stores.computeIfAbsent(name, k ->
       backendDataModel.createStoreBackend(manager, prefix, name)
     );
-    try {
-      store.ensureStore();
-    } catch (BackendException e) {
-      throw e;
-    }
+    store.ensureStore();
     log.debug("<== ContainerNameCosmosStoreFactory.create prefix:{} name:{} returning:{}", prefix,
         name, store);
     return store;
