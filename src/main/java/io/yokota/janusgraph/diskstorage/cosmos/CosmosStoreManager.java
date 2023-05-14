@@ -145,7 +145,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
         default:
           throw new IllegalArgumentException();
       }
-      if (userAgentSuffix != null) {
+      if (!userAgentSuffix.isEmpty()) {
         builder.userAgentSuffix(userAgentSuffix);
       }
       if (preferredRegions.length > 0) {

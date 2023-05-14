@@ -157,11 +157,11 @@ public final class Constants {
   public static final ConfigOption<String> COSMOS_USER_AGENT_SUFFIX =
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "user-agent-suffix",
           "The value to be appended to the user-agent header.",
-          LOCAL, null);
+          LOCAL, "", Predicates.alwaysTrue());
   public static final ConfigOption<String[]> COSMOS_PREFERRED_REGIONS =
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "preferred-regions",
           "The preferred regions for geo-replicated accounts.",
-          LOCAL, new String[]{});
+          LOCAL, new String[]{}, Predicates.alwaysTrue());
   public static final ConfigOption<Integer> COSMOS_CLIENT_BATCH_SIZE =
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "batch-size",
           "The size for batch requests.",

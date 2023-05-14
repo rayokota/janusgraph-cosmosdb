@@ -35,7 +35,7 @@ public class CosmosStorageSetup extends StorageSetup {
   }
 
   public static ModifiableConfiguration getCosmosConfiguration(final BackendDataModel model) {
-    return getCosmosConfiguration(null, model);
+    return getCosmosConfiguration("jg", model);
   }
 
   public static ModifiableConfiguration getCosmosConfiguration(final String graphName,
