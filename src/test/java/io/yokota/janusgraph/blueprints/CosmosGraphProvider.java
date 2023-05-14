@@ -23,7 +23,6 @@ public class CosmosGraphProvider extends AbstractJanusGraphProvider {
   @Override
   public ModifiableConfiguration getJanusGraphConfiguration(String graphName, Class<?> test,
       String testMethodName) {
-    // TODO fix
-    return CosmosStorageSetup.getCosmosConfiguration(graphName, BackendDataModel.SINGLE);
+    return CosmosStorageSetup.getCosmosConfiguration(graphName);
   }
 }
