@@ -17,6 +17,7 @@ import com.azure.cosmos.CosmosAsyncDatabase;
 import com.azure.cosmos.models.CosmosContainerProperties;
 import com.azure.cosmos.models.CosmosContainerRequestOptions;
 import com.azure.cosmos.models.ThroughputProperties;
+import io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -193,7 +194,7 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     if (null == key) {
       return "";
     }
-    return Constants.HEX_PREFIX + Hex.encodeHexString(key.asByteBuffer().array());
+    return AbstractBuilder.encodeKey(key);
   }
 
   String encodeForLog(final List<?> columns) {
