@@ -43,17 +43,16 @@ public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
     if (model == BackendDataModel.UNKNOWN) {
       model = BackendDataModel.valueOf(config.get(Constants.STORES_DATA_MODEL_DEFAULT));
     }
-    log.debug("=== ContainerNameCosmosStoreFactory.create model:{}", model);
-    final CosmosKeyColumnValueStore storeBackend = model.createStoreBackend(manager, prefix, name);
-    final CosmosKeyColumnValueStore previous = stores.putIfAbsent(name, storeBackend);
-    if (null == previous) {
-      try {
-        storeBackend.ensureStore();
-      } catch (BackendException e) {
-        throw e;
-      }
+    BackendDataModel backendDataModel = model;
+    log.debug("=== ContainerNameCosmosStoreFactory.create model:{}", backendDataModel);
+    final CosmosKeyColumnValueStore store = stores.computeIfAbsent(name, k ->
+      backendDataModel.createStoreBackend(manager, prefix, name)
+    );
+    try {
+      store.ensureStore();
+    } catch (BackendException e) {
+      throw e;
     }
-    final CosmosKeyColumnValueStore store = stores.get(name);
     log.debug("<== ContainerNameCosmosStoreFactory.create prefix:{} name:{} returning:{}", prefix,
         name, store);
     return store;

@@ -17,6 +17,7 @@ import static io.yokota.janusgraph.diskstorage.cosmos.Constants.PATCH_SIZE_LIMIT
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
 
+import com.azure.cosmos.CosmosException;
 import com.azure.cosmos.models.CosmosBatch;
 import com.azure.cosmos.models.CosmosBatchPatchItemRequestOptions;
 import com.azure.cosmos.models.CosmosBatchRequestOptions;
@@ -119,7 +120,13 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       CosmosItemResponse<ObjectNode> response = getContainer()
           .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
               ObjectNode.class)
-          .onErrorResume(exception -> Mono.empty())
+          .onErrorResume(exception -> {
+            if (!(exception instanceof CosmosException)
+                || ((CosmosException) exception).getStatusCode() != 404) {
+              log.warn("Could not read item:{}", itemId, exception);
+            }
+            return Mono.empty();
+          })
           .block();
 
       filteredEntries = extractEntriesFromGetItemResult(
@@ -149,7 +156,13 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
                 CosmosItemResponse<ObjectNode> response = getContainer()
                     .readItem(itemId, new PartitionKey(itemId), new CosmosItemRequestOptions(),
                         ObjectNode.class)
-                    .onErrorResume(exception -> Mono.empty())
+                    .onErrorResume(exception -> {
+                      if (!(exception instanceof CosmosException)
+                          || ((CosmosException) exception).getStatusCode() != 404) {
+                        log.warn("Could not read item:{}", itemId, exception);
+                      }
+                      return Mono.empty();
+                    })
                     .block();
                 EntryList entryList = extractEntriesFromGetItemResult(
                     response != null ? response.getItem() : null,
@@ -230,7 +243,13 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     // (a patch operation is not a "patch-sert" in the same manner as upsert).
     // If the item already exists, the create operation will fail, which we ignore.
     return getContainer().createItem(item, partitionKey, new CosmosItemRequestOptions())
-        .onErrorResume(exception -> Mono.empty())
+        .onErrorResume(exception -> {
+          if (!(exception instanceof CosmosException)
+              || ((CosmosException) exception).getStatusCode() != 409) {
+            log.warn("Could not create item:{}", encodeKey(key), exception);
+          }
+          return Mono.empty();
+        })
         .thenMany(executeBatch(key, mutation));
   }
 

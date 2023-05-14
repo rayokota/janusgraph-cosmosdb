@@ -101,6 +101,9 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     factory = new ContainerNameCosmosStoreFactory(backendConfig);
     features = initializeFeatures(backendConfig);
     createDatabaseIfNotExists();
+    while (!exists()) {
+      createDatabaseIfNotExists();
+    }
   }
 
   public CosmosAsyncDatabase getDatabase() {
@@ -112,7 +115,10 @@ public class CosmosStoreManager extends DistributedStoreManager implements
 
     //  Create database if not exists
     client.createDatabaseIfNotExists(databaseName)
-        .onErrorResume(exception -> Mono.empty())
+        .onErrorResume(exception -> {
+          log.warn("Could not create database", exception);
+          return Mono.empty();
+        })
         .block();
     database = client.getDatabase(databaseName);
   }
@@ -137,7 +143,10 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     // TODO remove
     /*
     client.getDatabase(databaseName).delete(new CosmosDatabaseRequestOptions())
-        .onErrorResume(exception -> Mono.empty())
+        .onErrorResume(exception -> {
+          log.warn("Could not delete database:{}", databaseName, exception);
+          return Mono.empty();
+        })
         .block();
      */
     log.debug("<== clearStorage returning:void");
@@ -148,7 +157,10 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     List<CosmosDatabaseProperties> result = client.queryDatabases(
         String.format("SELECT * FROM root r where r.id = '%s'", databaseName) , null)
         .collectList()
-        .onErrorResume(exception -> Mono.empty())
+        .onErrorResume(exception -> {
+          log.warn("Could not query database:{}", databaseName, exception);
+          return Mono.empty();
+        })
         .block();
     return result != null && !result.isEmpty();
   }

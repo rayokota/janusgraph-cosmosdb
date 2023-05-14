@@ -44,6 +44,8 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
 
+  private static final int DEFAULT_COSMOS_RUS = 10000;
+
   protected final CosmosAsyncClient client;
   private final String containerName;
   private final CosmosStoreManager manager;
@@ -96,6 +98,9 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
   public final void ensureStore() throws BackendException {
     log.debug("==> ensureStore table:{}", containerName);
     createContainerIfNotExists();
+    while (!exists()) {
+      createContainerIfNotExists();
+    }
   }
 
   @Override
@@ -103,7 +108,10 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     log.debug("==> deleteStore name:{}", containerName);
     if (container != null) {
       container.delete(new CosmosContainerRequestOptions())
-          .onErrorResume(exception -> Mono.empty())
+          .onErrorResume(exception -> {
+            log.warn("Could not delete container", exception);
+            return Mono.empty();
+          })
           .block();
     }
   }
@@ -115,15 +123,32 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     CosmosContainerProperties containerProperties =
         new CosmosContainerProperties(containerName, "/" + Constants.JANUSGRAPH_PARTITION_KEY);
 
-    // Provision throughput
-    ThroughputProperties throughputProperties = ThroughputProperties.createManualThroughput(400);
+    // Provision throughput, default 10000 RU/s
+    ThroughputProperties throughputProperties =
+        ThroughputProperties.createManualThroughput(DEFAULT_COSMOS_RUS);
 
-    //  Create container with 400 RU/s
+    //  Create container
     CosmosAsyncDatabase database = manager.getDatabase();
     database.createContainerIfNotExists(containerProperties, throughputProperties)
-        .onErrorResume(exception -> Mono.empty())
+        .onErrorResume(exception -> {
+          log.warn("Could not create container", exception);
+          return Mono.empty();
+        })
         .block();
     container = database.getContainer(containerName);
+  }
+
+  private boolean exists() throws BackendException {
+    CosmosAsyncDatabase database = manager.getDatabase();
+    List<CosmosContainerProperties> result = database.queryContainers(
+            String.format("SELECT * FROM root r where r.id = '%s'", containerName) , null)
+        .collectList()
+        .onErrorResume(exception -> {
+          log.warn("Could not query container:{}", containerName, exception);
+          return Mono.empty();
+        })
+        .block();
+    return result != null && !result.isEmpty();
   }
 
   @Override
