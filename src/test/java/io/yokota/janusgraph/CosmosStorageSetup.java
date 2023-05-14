@@ -16,8 +16,8 @@ package io.yokota.janusgraph;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_ENDPOINT;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_KEY;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_TABLE_PREFIX;
-import static io.yokota.janusgraph.diskstorage.cosmos.Constants.STORES_DATA_MODEL;
-import static io.yokota.janusgraph.diskstorage.cosmos.Constants.STORES_DATA_MODEL_DEFAULT;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_STORES_DATA_MODEL;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_STORES_DATA_MODEL_DEFAULT;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.DROP_ON_CLEAR;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.STORAGE_BACKEND;
 import static org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration.buildGraphConfiguration;
@@ -42,7 +42,7 @@ public class CosmosStorageSetup extends StorageSetup {
       final BackendDataModel model) {
     ModifiableConfiguration config = buildGraphConfiguration()
         .set(STORAGE_BACKEND, "io.yokota.janusgraph.diskstorage.cosmos.CosmosStoreManager")
-        .set(STORES_DATA_MODEL_DEFAULT, model.name())
+        .set(COSMOS_STORES_DATA_MODEL_DEFAULT, model.name())
         .set(COSMOS_TABLE_PREFIX, graphName)
         .set(COSMOS_CLIENT_ENDPOINT, "https://localhost:8081")
         .set(COSMOS_CLIENT_KEY,
@@ -50,7 +50,7 @@ public class CosmosStorageSetup extends StorageSetup {
         .set(DROP_ON_CLEAR, false);
 
     if (graphName != null) {
-      config.set(STORES_DATA_MODEL, model.name(), graphName);
+      config.set(COSMOS_STORES_DATA_MODEL, model.name(), graphName);
     }
     return config;
   }

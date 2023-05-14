@@ -44,15 +44,10 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
 
-  // TODO
-  private static final int DEFAULT_COSMOS_RUS = 10000;
-
   protected final CosmosAsyncClient client;
   private final String containerName;
   private final CosmosStoreManager manager;
   private final String name;
-  // TODO
-  private final boolean forceConsistentRead = false;
   private CosmosAsyncContainer container;
 
   AbstractCosmosStore(final CosmosStoreManager manager, final String prefix,
@@ -75,6 +70,14 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
 
   public CosmosAsyncContainer getContainer() {
     return container;
+  }
+
+  public int getBatchSize() {
+    return manager.getBatchSize();
+  }
+
+  public int getPatchSize() {
+    return manager.getPatchSize();
   }
 
   @Override
@@ -126,7 +129,8 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
 
     // Provision throughput, default 10000 RU/s
     ThroughputProperties throughputProperties =
-        ThroughputProperties.createManualThroughput(DEFAULT_COSMOS_RUS);
+        ThroughputProperties.createManualThroughput(
+            manager.getStorageConfig().get(Constants.COSMOS_STORES_THROUGHPUT));
 
     //  Create container
     CosmosAsyncDatabase database = manager.getDatabase();

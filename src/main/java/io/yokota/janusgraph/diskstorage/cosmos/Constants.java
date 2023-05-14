@@ -18,10 +18,7 @@ import static org.janusgraph.diskstorage.configuration.ConfigOption.Type.LOCAL;
 import com.azure.cosmos.ConnectionMode;
 import com.azure.cosmos.ConsistencyLevel;
 import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
 import java.time.Duration;
-import java.util.List;
-import org.janusgraph.diskstorage.Backend;
 import org.janusgraph.diskstorage.configuration.ConfigNamespace;
 import org.janusgraph.diskstorage.configuration.ConfigOption;
 import org.janusgraph.graphdb.configuration.GraphDatabaseConfiguration;
@@ -38,11 +35,11 @@ public final class Constants {
   public static final String JANUSGRAPH_COLUMN_KEY = "id";
   public static final String JANUSGRAPH_VALUE = "v";
   public static final String HEX_PREFIX = "0x";
-  // TODO make configurable
+
   // The maximum size of a batch, per the Cosmos DB docs
-  public static final int BATCH_SIZE_LIMIT = 10;
+  public static final int DEFAULT_BATCH_SIZE_LIMIT = 100;
   // The maximum size of a patch, per the Cosmos DB docs
-  public static final int PATCH_SIZE_LIMIT = 10;
+  public static final int DEFAULT_PATCH_SIZE_LIMIT = 10;
 
   // Copied from com.azure.cosmos.DirectConnnectionConfig
   private static final Boolean DEFAULT_CONNECTION_ENDPOINT_REDISCOVERY_ENABLED = true;
@@ -78,11 +75,11 @@ public final class Constants {
       "prefix", "A prefix to put before the JanusGraph table name. "
       + "This allows clients to have multiple graphs on the same AWS Cosmos DB account.",
       LOCAL, "jg");
-  public static final ConfigOption<String> STORES_DATA_MODEL_DEFAULT = new ConfigOption<>(
+  public static final ConfigOption<String> COSMOS_STORES_DATA_MODEL_DEFAULT = new ConfigOption<>(
       COSMOS_CONFIGURATION_NAMESPACE,
       "data-model-default", "The default data model.",
       FIXED, BackendDataModel.MULTI.name());
-  public static final ConfigOption<String> STORES_DATA_MODEL =
+  public static final ConfigOption<String> COSMOS_STORES_DATA_MODEL =
       new ConfigOption<>(COSMOS_STORES_NAMESPACE, "data-model",
           "SINGLE Means that all the values for a given key are put into a single Cosmos DB item. "
               + "A SINGLE is efficient because all the updates for a single key can be done atomically. "
@@ -92,6 +89,10 @@ public final class Constants {
               + "rather than a direct lookup. It is HIGHLY recommended to use MULTI for edgestore unless your graph has "
               + "very low max degree.",
           FIXED, BackendDataModel.UNKNOWN.name());
+  public static final ConfigOption<Integer> COSMOS_STORES_THROUGHPUT =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "throughput",
+          "Sets the request units for the Cosmos DB container.",
+          LOCAL, 10000);
 
   public static final ConfigOption<String> COSMOS_CLIENT_ENDPOINT =
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "endpoint",
@@ -161,4 +162,12 @@ public final class Constants {
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "preferred-regions",
           "The preferred regions for geo-replicated accounts.",
           LOCAL, new String[]{});
+  public static final ConfigOption<Integer> COSMOS_CLIENT_BATCH_SIZE =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "batch-size",
+          "The size for batch requests.",
+          LOCAL, DEFAULT_BATCH_SIZE_LIMIT, size -> size >= 1 && size <= 100);
+  public static final ConfigOption<Integer> COSMOS_CLIENT_PATCH_SIZE =
+      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "patch-size",
+          "The size for patch requests.",
+          LOCAL, DEFAULT_PATCH_SIZE_LIMIT, size -> size >= 1 && size <= 10);
 }

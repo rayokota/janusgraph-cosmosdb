@@ -39,9 +39,9 @@ public class ContainerNameCosmosStoreFactory implements CosmosStoreFactory {
     // ensure there is only one instance used per container name.
 
     BackendDataModel model = BackendDataModel.valueOf(
-        config.get(Constants.STORES_DATA_MODEL, name));
+        config.get(Constants.COSMOS_STORES_DATA_MODEL, name));
     if (model == BackendDataModel.UNKNOWN) {
-      model = BackendDataModel.valueOf(config.get(Constants.STORES_DATA_MODEL_DEFAULT));
+      model = BackendDataModel.valueOf(config.get(Constants.COSMOS_STORES_DATA_MODEL_DEFAULT));
     }
     BackendDataModel backendDataModel = model;
     log.debug("=== ContainerNameCosmosStoreFactory.create model:{}", backendDataModel);

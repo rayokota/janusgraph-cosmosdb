@@ -12,12 +12,14 @@
  */
 package io.yokota.janusgraph.diskstorage.cosmos;
 
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_BATCH_SIZE;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_CONN_MODE;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_CONN_TIMEOUT;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_ENDPOINT;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_KEY;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_MAX_CONN;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_MAX_REQUESTS;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_PATCH_SIZE;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_PROXY_HOST;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_PROXY_MAX_POOL_SIZE;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CLIENT_PROXY_PASSWORD;
@@ -29,6 +31,7 @@ import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CONSISTEN
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_CONTENT_RESPONSE_ON_WRITE;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_DATABASE;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_PREFERRED_REGIONS;
+import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_STORES_THROUGHPUT;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_TABLE_PREFIX;
 import static io.yokota.janusgraph.diskstorage.cosmos.Constants.COSMOS_USER_AGENT_SUFFIX;
 
@@ -82,6 +85,8 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   private final StoreFeatures features;
   private final String databaseName;
   private final String prefix;
+  private final int batchSize;
+  private final int patchSize;
   private CosmosAsyncDatabase database;
 
   private static int getPort(final Configuration config) throws BackendException {
@@ -152,6 +157,8 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     }
     databaseName = config.get(COSMOS_DATABASE);
     prefix = config.get(COSMOS_TABLE_PREFIX);
+    batchSize = config.get(COSMOS_CLIENT_BATCH_SIZE);
+    patchSize = config.get(COSMOS_CLIENT_PATCH_SIZE);
     factory = new ContainerNameCosmosStoreFactory(config);
     features = initializeFeatures(config);
     createDatabaseIfNotExists();
@@ -179,6 +186,14 @@ public class CosmosStoreManager extends DistributedStoreManager implements
 
   public CosmosAsyncClient getClient() {
     return client;
+  }
+
+  public int getBatchSize() {
+    return batchSize;
+  }
+
+  public int getPatchSize() {
+    return patchSize;
   }
 
   @Override

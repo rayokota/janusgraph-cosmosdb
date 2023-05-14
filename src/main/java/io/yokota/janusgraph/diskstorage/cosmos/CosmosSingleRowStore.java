@@ -12,8 +12,6 @@
  */
 package io.yokota.janusgraph.diskstorage.cosmos;
 
-import static io.yokota.janusgraph.diskstorage.cosmos.Constants.BATCH_SIZE_LIMIT;
-import static io.yokota.janusgraph.diskstorage.cosmos.Constants.PATCH_SIZE_LIMIT;
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
 
@@ -271,11 +269,11 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     if (mutation.hasDeletions()) {
       for (StaticBuffer b : mutation.getDeletions()) {
         patch.remove("/" + encodeKey(b));
-        if (++patchSize == PATCH_SIZE_LIMIT) {
+        if (++patchSize == getPatchSize()) {
           batch.patchItemOperation(key, patch, new CosmosBatchPatchItemRequestOptions());
           patch = CosmosPatchOperations.create();
           patchSize = 0;
-          if (++batchSize == BATCH_SIZE_LIMIT) {
+          if (++batchSize == getBatchSize()) {
             result.add(batch);
             batch = CosmosBatch.createCosmosBatch(partitionKey);
             batchSize = 0;
@@ -287,11 +285,11 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     if (mutation.hasAdditions()) {
       for (Entry e : mutation.getAdditions()) {
         patch.add("/" + encodeKey(e.getColumn()), encodeValue(e.getValue()));
-        if (++patchSize == PATCH_SIZE_LIMIT) {
+        if (++patchSize == getPatchSize()) {
           batch.patchItemOperation(key, patch, new CosmosBatchPatchItemRequestOptions());
           patch = CosmosPatchOperations.create();
           patchSize = 0;
-          if (++batchSize == BATCH_SIZE_LIMIT) {
+          if (++batchSize == getBatchSize()) {
             result.add(batch);
             batch = CosmosBatch.createCosmosBatch(partitionKey);
             batchSize = 0;

@@ -12,7 +12,6 @@
  */
 package io.yokota.janusgraph.diskstorage.cosmos;
 
-import static io.yokota.janusgraph.diskstorage.cosmos.Constants.BATCH_SIZE_LIMIT;
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeKey;
 
 import com.azure.cosmos.models.CosmosBatch;
@@ -231,7 +230,7 @@ public class CosmosStore extends AbstractCosmosStore {
     if (mutation.hasDeletions()) {
       for (StaticBuffer b : mutation.getDeletions()) {
         batch.deleteItemOperation(encodeKey(b), new CosmosBatchItemRequestOptions());
-        if (++batchSize == BATCH_SIZE_LIMIT) {
+        if (++batchSize == getBatchSize()) {
           result.add(batch);
           batch = CosmosBatch.createCosmosBatch(partitionKey);
           batchSize = 0;
@@ -247,7 +246,7 @@ public class CosmosStore extends AbstractCosmosStore {
             .value(e.getValue())
             .build();
         batch.upsertItemOperation(item, new CosmosBatchItemRequestOptions());
-        if (++batchSize == BATCH_SIZE_LIMIT) {
+        if (++batchSize == getBatchSize()) {
           result.add(batch);
           batch = CosmosBatch.createCosmosBatch(partitionKey);
           batchSize = 0;
