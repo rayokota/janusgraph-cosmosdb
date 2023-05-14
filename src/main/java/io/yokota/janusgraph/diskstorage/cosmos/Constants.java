@@ -90,7 +90,7 @@ public final class Constants {
               + "very low max degree.",
           FIXED, BackendDataModel.UNKNOWN.name());
   public static final ConfigOption<Integer> COSMOS_STORES_THROUGHPUT =
-      new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "throughput",
+      new ConfigOption<>(COSMOS_STORES_NAMESPACE, "throughput",
           "Sets the request units for the Cosmos DB container.",
           LOCAL, 10000);
 
@@ -112,36 +112,16 @@ public final class Constants {
           LOCAL, DEFAULT_CONNECT_TIMEOUT);
   public static final ConfigOption<Integer> COSMOS_CLIENT_MAX_CONN =
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "connection-max",
-          "The maximum number connections per endpoint.",
+          "The maximum number of connections per endpoint.",
           LOCAL, DEFAULT_MAX_CONNECTIONS_PER_ENDPOINT);
   public static final ConfigOption<Integer> COSMOS_CLIENT_MAX_REQUESTS =
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "request-max",
-          "The maximum number requests per connection.",
+          "The maximum number of requests per connection.",
           LOCAL, DEFAULT_MAX_REQUESTS_PER_CONNECTION);
   public static final ConfigOption<Duration> COSMOS_CLIENT_REQUEST_TIMEOUT =
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "request-timeout",
           "The amount of time to wait for a response.",
           LOCAL, DEFAULT_NETWORK_REQUEST_TIMEOUT);
-  public static final ConfigOption<String> COSMOS_CLIENT_PROXY_HOST =
-      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "host",
-          "The optional proxy host the client will connect through.",
-          LOCAL, "", Predicates.alwaysTrue());
-  public static final ConfigOption<Integer> COSMOS_CLIENT_PROXY_PORT =
-      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "port",
-          "The optional proxy port the client will connect through.",
-          LOCAL, 0, Predicates.alwaysTrue());
-  public static final ConfigOption<String> COSMOS_CLIENT_PROXY_USERNAME =
-      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "username",
-          "The optional proxy user name to use if connecting through a proxy.",
-          LOCAL, "", Predicates.alwaysTrue());
-  public static final ConfigOption<String> COSMOS_CLIENT_PROXY_PASSWORD =
-      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "password",
-          "The optional proxy password to use when connecting through a proxy.",
-          LOCAL, "", Predicates.alwaysTrue());
-  public static final ConfigOption<Integer> COSMOS_CLIENT_PROXY_MAX_POOL_SIZE =
-      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "max-pool-size",
-          "The maximum allowed number of threads for the Cosmos DB client.",
-          LOCAL, 1000);
   public static final ConfigOption<String> COSMOS_CONSISTENCY_LEVEL =
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "consistency-level",
           "This feature sets the consistency level on Cosmos DB calls.",
@@ -170,4 +150,24 @@ public final class Constants {
       new ConfigOption<>(COSMOS_CLIENT_NAMESPACE, "patch-size",
           "The size for patch requests.",
           LOCAL, DEFAULT_PATCH_SIZE_LIMIT, size -> size >= 1 && size <= 10);
+  public static final ConfigOption<String> COSMOS_CLIENT_PROXY_HOST =
+      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "host",
+          "The optional proxy host the client will connect through.",
+          LOCAL, "", Predicates.alwaysTrue());
+  public static final ConfigOption<Integer> COSMOS_CLIENT_PROXY_PORT =
+      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "port",
+          "The optional proxy port the client will connect through.",
+          LOCAL, 0, Predicates.alwaysTrue());
+  public static final ConfigOption<String> COSMOS_CLIENT_PROXY_USERNAME =
+      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "username",
+          "The optional proxy user name to use if connecting through a proxy.",
+          LOCAL, "", Predicates.alwaysTrue());
+  public static final ConfigOption<String> COSMOS_CLIENT_PROXY_PASSWORD =
+      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "password",
+          "The optional proxy password to use when connecting through a proxy.",
+          LOCAL, "", Predicates.alwaysTrue());
+  public static final ConfigOption<Integer> COSMOS_CLIENT_PROXY_MAX_POOL_SIZE =
+      new ConfigOption<>(COSMOS_CLIENT_PROXY_NAMESPACE, "max-pool-size",
+          "The maximum allowed number of threads for the Cosmos DB client.",
+          LOCAL, 1000);
 }
