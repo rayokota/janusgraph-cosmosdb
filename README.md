@@ -1,4 +1,4 @@
-# Cosmos DB Storage Adapter for JanusGraph
+# Azure Cosmos DB Storage Adapter for JanusGraph
 
 [![Build Status][github-actions-shield]][github-actions-link]
 [![Maven][maven-shield]][maven-link]
