@@ -134,7 +134,7 @@ configuration.
 | `s.c.c.batch-size`                        | The size for batch requests.  Must be between 1 and 100.                                             | Integer  | 100           | LOCAL |
 | `s.c.c.patch-size`                        | The size for patch requests.  Must be between 1 and 10.                                              | Integer  | 10            | LOCAL |
 
-#### Cosmos DB Client Proxy Configuration Parameters
+### Cosmos DB Client Proxy Configuration Parameters
 All of these configuration parameters are in the
 `storage.cosmos.client.proxy` (`s.c.c.p`) namespace subset, and are related to
 the Cosmos DB SDK client proxy configuration.
