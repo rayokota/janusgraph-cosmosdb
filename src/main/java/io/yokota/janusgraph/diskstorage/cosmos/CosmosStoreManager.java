@@ -44,6 +44,7 @@ import com.azure.cosmos.CosmosClientBuilder;
 import com.azure.cosmos.DirectConnectionConfig;
 import com.azure.cosmos.GatewayConnectionConfig;
 import com.azure.cosmos.models.CosmosDatabaseProperties;
+import com.azure.cosmos.models.CosmosDatabaseRequestOptions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -204,16 +205,18 @@ public class CosmosStoreManager extends DistributedStoreManager implements
     for (CosmosKeyColumnValueStore store : factory.getAllStores()) {
       store.deleteStore();
     }
-    // TODO remove
-    /*
+    log.debug("<== clearStorage returning:void");
+  }
+
+  public void deleteDatabase() throws BackendException {
+    log.debug("==> deleteDatabase {}", databaseName);
     client.getDatabase(databaseName).delete(new CosmosDatabaseRequestOptions())
         .onErrorResume(exception -> {
           log.warn("Could not delete database:{}", databaseName, exception);
           return Mono.empty();
         })
         .block();
-     */
-    log.debug("<== clearStorage returning:void");
+    log.debug("<== deleteDatabase {}", databaseName);
   }
 
   @Override
