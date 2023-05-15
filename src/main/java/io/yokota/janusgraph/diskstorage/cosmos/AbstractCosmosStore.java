@@ -128,7 +128,7 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
     // Provision throughput, default 10000 RU/s
     ThroughputProperties throughputProperties =
         ThroughputProperties.createManualThroughput(
-            manager.getStorageConfig().get(Constants.COSMOS_STORES_THROUGHPUT));
+            manager.getStorageConfig().get(Constants.COSMOS_STORES_THROUGHPUT, name));
 
     //  Create container
     CosmosAsyncDatabase database = manager.getDatabase();
