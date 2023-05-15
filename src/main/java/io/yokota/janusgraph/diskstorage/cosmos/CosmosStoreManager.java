@@ -222,7 +222,7 @@ public class CosmosStoreManager extends DistributedStoreManager implements
   @Override
   public boolean exists() throws BackendException {
     List<CosmosDatabaseProperties> result = client.queryDatabases(
-        String.format("SELECT * FROM root r where r.id = '%s'", databaseName) , null)
+        String.format("SELECT * FROM root r WHERE r.id = '%s'", databaseName) , null)
         .collectList()
         .onErrorResume(exception -> {
           log.warn("Could not query database:{}", databaseName, exception);

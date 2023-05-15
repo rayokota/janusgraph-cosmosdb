@@ -144,7 +144,7 @@ public abstract class AbstractCosmosStore implements CosmosKeyColumnValueStore {
   private boolean exists() throws BackendException {
     CosmosAsyncDatabase database = manager.getDatabase();
     List<CosmosContainerProperties> result = database.queryContainers(
-            String.format("SELECT * FROM root r where r.id = '%s'", containerName) , null)
+            String.format("SELECT * FROM root r WHERE r.id = '%s'", containerName) , null)
         .collectList()
         .onErrorResume(exception -> {
           log.warn("Could not query container:{}", containerName, exception);
