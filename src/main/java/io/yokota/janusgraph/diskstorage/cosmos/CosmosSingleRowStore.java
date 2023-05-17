@@ -146,8 +146,9 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       log.debug("==> getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}", getContainerName(),
           encodeForLog(keys), encodeForLog(query),
           txh);
-      return keys.stream()
+      return Flux.fromIterable(keys)
           .parallel()
+          .runOn(Schedulers.boundedElastic())
           .map(key -> {
                 String itemId = encodeKey(key);
                 CosmosItemResponse<ObjectNode> response = getContainer()
@@ -167,7 +168,9 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
                 return Tuples.of(key, entryList);
               }
           )
-          .collect(Collectors.toMap(Tuple2::getT1, Tuple2::getT2));
+          .sequential()
+          .collectMap(Tuple2::getT1, Tuple2::getT2)
+          .block();
     } finally {
       log.debug("<== getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}", getContainerName(),
           encodeForLog(keys), encodeForLog(query),
@@ -204,32 +207,34 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         .parallel()
         .runOn(Schedulers.boundedElastic())
         .flatMap(entry -> executeCreateAndBatch(entry.getKey(), entry.getValue()))
-        .map(response -> {
-          // Examining if the batch of operations is successful
-          if (response.isSuccessStatusCode()) {
-            log.trace("The batch of operations succeeded.");
-          } else {
-            // Iterating over the operation results to find out the error code
-            response.getResults().forEach(result -> {
-              // Failed operation will have a status code of the corresponding error.
-              // All other operations will have a 424 (Failed Dependency) status code.
-              if (result.getStatusCode() != HttpResponseStatus.FAILED_DEPENDENCY.code()) {
-                CosmosItemOperation itemOperation = result.getOperation();
-                log.warn("Operation for Item with ID [{}] and Partition Key Value [{}]" +
-                        " failed with a status code [{}], resulting in batch failure.",
-                    itemOperation.getId(),
-                    itemOperation.getPartitionKeyValue(),
-                    result.getStatusCode());
-              }
-            });
+        .map(responses -> {
+          for (CosmosBatchResponse response : responses) {
+            // Examining if the batch of operations is successful
+            if (response.isSuccessStatusCode()) {
+              log.trace("The batch of operations succeeded.");
+            } else {
+              // Iterating over the operation results to find out the error code
+              response.getResults().forEach(result -> {
+                // Failed operation will have a status code of the corresponding error.
+                // All other operations will have a 424 (Failed Dependency) status code.
+                if (result.getStatusCode() != HttpResponseStatus.FAILED_DEPENDENCY.code()) {
+                  CosmosItemOperation itemOperation = result.getOperation();
+                  log.warn("Operation for Item with ID [{}] and Partition Key Value [{}]" +
+                          " failed with a status code [{}], resulting in batch failure.",
+                      itemOperation.getId(),
+                      itemOperation.getPartitionKeyValue(),
+                      result.getStatusCode());
+                }
+              });
+            }
           }
-          return response;
+          return responses.get(responses.size() - 1);
         })
         .sequential()
         .blockLast();
   }
 
-  protected Flux<CosmosBatchResponse> executeCreateAndBatch(StaticBuffer key, KCVMutation mutation) {
+  protected Mono<List<CosmosBatchResponse>> executeCreateAndBatch(StaticBuffer key, KCVMutation mutation) {
     ObjectNode item = new ItemBuilder()
         .partitionKey(key)
         .columnKey(key)
@@ -247,14 +252,15 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
           }
           return Mono.empty();
         })
-        .thenMany(executeBatch(key, mutation));
+        .then(executeBatch(key, mutation));
   }
 
-  protected Flux<CosmosBatchResponse> executeBatch(StaticBuffer key, KCVMutation mutation) {
+  protected Mono<List<CosmosBatchResponse>> executeBatch(StaticBuffer key, KCVMutation mutation) {
     List<CosmosBatch> batches = convertToBatches(encodeKey(key), mutation);
-    return Flux.fromIterable(batches)
-        .flatMap(batch ->
-            getContainer().executeCosmosBatch(batch, new CosmosBatchRequestOptions()));
+    List<Mono<CosmosBatchResponse>> responses = batches.stream()
+        .map(batch -> getContainer().executeCosmosBatch(batch, new CosmosBatchRequestOptions()))
+        .collect(Collectors.toList());
+    return Flux.fromIterable(responses).flatMap(x -> x).collectList();
   }
 
   protected List<CosmosBatch> convertToBatches(String key, KCVMutation mutation) {

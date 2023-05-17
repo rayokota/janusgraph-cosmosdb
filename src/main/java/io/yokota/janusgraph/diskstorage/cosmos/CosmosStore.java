@@ -121,13 +121,16 @@ public class CosmosStore extends AbstractCosmosStore {
           encodeForLog(query),
           txh);
 
-      return keys.stream()
+      return Flux.fromIterable(keys)
           .parallel()
+          .runOn(Schedulers.boundedElastic())
           .map(key -> Tuples.of(key, query(key, query, txh)))
-          .collect(Collectors.toMap(
+          .sequential()
+          .collectMap(
               Tuple2::getT1,
-              tuple -> StaticArrayEntryList.of(tuple.getT2().collect(Collectors.toList())))
-          );
+              tuple -> StaticArrayEntryList.of(tuple.getT2().collect(Collectors.toList()))
+          )
+          .block();
     } finally {
       log.debug("<== getSliceMultiSliceQuery table:{} keys:{} query:{} txh:{}",
           getContainerName(),
