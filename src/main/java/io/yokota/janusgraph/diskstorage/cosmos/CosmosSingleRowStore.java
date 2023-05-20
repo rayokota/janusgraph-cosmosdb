@@ -268,7 +268,6 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     if (patchSize > 0) {
       result.add(patch);
     }
-
     return result;
   }
 }
