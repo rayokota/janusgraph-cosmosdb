@@ -16,16 +16,7 @@ import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.en
 import static io.yokota.janusgraph.diskstorage.cosmos.builder.AbstractBuilder.encodeValue;
 
 import com.azure.cosmos.CosmosException;
-import com.azure.cosmos.models.CosmosBatch;
-import com.azure.cosmos.models.CosmosBatchPatchItemRequestOptions;
-import com.azure.cosmos.models.CosmosBatchRequestOptions;
-import com.azure.cosmos.models.CosmosBatchResponse;
-import com.azure.cosmos.models.CosmosItemOperation;
-import com.azure.cosmos.models.CosmosItemRequestOptions;
-import com.azure.cosmos.models.CosmosItemResponse;
-import com.azure.cosmos.models.CosmosPatchOperations;
-import com.azure.cosmos.models.CosmosQueryRequestOptions;
-import com.azure.cosmos.models.PartitionKey;
+import com.azure.cosmos.models.*;
 import com.azure.cosmos.util.CosmosPagedIterable;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -207,32 +198,11 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         .parallel()
         .runOn(Schedulers.boundedElastic())
         .flatMap(entry -> executeCreateAndBatch(entry.getKey(), entry.getValue()))
-        .map(response -> {
-            // Examining if the batch of operations is successful
-            if (response.isSuccessStatusCode()) {
-              log.trace("The batch of operations succeeded.");
-            } else {
-              // Iterating over the operation results to find out the error code
-              response.getResults().forEach(result -> {
-                // Failed operation will have a status code of the corresponding error.
-                // All other operations will have a 424 (Failed Dependency) status code.
-                if (result.getStatusCode() != HttpResponseStatus.FAILED_DEPENDENCY.code()) {
-                  CosmosItemOperation itemOperation = result.getOperation();
-                  log.warn("Operation for Item with ID [{}] and Partition Key Value [{}]" +
-                          " failed with a status code [{}], resulting in batch failure.",
-                      itemOperation.getId(),
-                      itemOperation.getPartitionKeyValue(),
-                      result.getStatusCode());
-                }
-              });
-            }
-          return response;
-        })
         .sequential()
         .blockLast();
   }
 
-  protected Mono<CosmosBatchResponse> executeCreateAndBatch(StaticBuffer key, KCVMutation mutation) {
+  protected Mono<CosmosItemResponse<ObjectNode>> executeCreateAndBatch(StaticBuffer key, KCVMutation mutation) {
     ObjectNode item = new ItemBuilder()
         .partitionKey(key)
         .columnKey(key)
@@ -242,49 +212,43 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
     // Ensure the items already exist, as patch operations will not create the item
     // (a patch operation is not a "patch-sert" in the same manner as upsert).
     // If the item already exists, the create operation will fail, which we ignore.
-    return getContainer().createItem(item, partitionKey, new CosmosItemRequestOptions())
+    Mono<CosmosItemResponse<ObjectNode>> response =
+            getContainer().createItem(item, partitionKey, new CosmosItemRequestOptions())
         .onErrorResume(exception -> {
           if (!(exception instanceof CosmosException)
               || ((CosmosException) exception).getStatusCode() != 409) {
             log.warn("Could not create item:{}", encodeKey(key), exception);
           }
           return Mono.empty();
-        })
-        .then(executeBatch(key, mutation));
-  }
+        });
 
-  protected Mono<CosmosBatchResponse> executeBatch(StaticBuffer key, KCVMutation mutation) {
-    List<CosmosBatch> batches = convertToBatches(encodeKey(key), mutation);
-    List<Mono<CosmosBatchResponse>> responses = batches.stream()
-        .map(batch -> getContainer().executeCosmosBatch(batch, new CosmosBatchRequestOptions()))
-        .collect(Collectors.toList());
-    Mono<CosmosBatchResponse> first = responses.get(0);
-    for (int i = 1; i < responses.size(); i++) {
-      first = first.then(responses.get(i));
+    for (Mono<CosmosItemResponse<ObjectNode>> patch : executePatches(key, mutation)) {
+      response = response.then(patch);
     }
-    return first;
+    return response;
   }
 
-  protected List<CosmosBatch> convertToBatches(String key, KCVMutation mutation) {
+  protected List<Mono<CosmosItemResponse<ObjectNode>>> executePatches(StaticBuffer key, KCVMutation mutation) {
+    PartitionKey partitionKey = new PartitionKey(encodeKey(key));
+    List<CosmosPatchOperations> patches = convertToPatches(encodeKey(key), mutation);
+    return patches.stream()
+        .map(patch -> getContainer().patchItem(encodeKey(key), partitionKey, patch, new CosmosPatchItemRequestOptions(), ObjectNode.class))
+        .collect(Collectors.toList());
+  }
+
+  protected List<CosmosPatchOperations> convertToPatches(String key, KCVMutation mutation) {
     PartitionKey partitionKey = new PartitionKey(key);
-    List<CosmosBatch> result = new ArrayList<>();
-    CosmosBatch batch = CosmosBatch.createCosmosBatch(partitionKey);
+    List<CosmosPatchOperations> result = new ArrayList<>();
     CosmosPatchOperations patch = CosmosPatchOperations.create();
-    int batchSize = 0;
     int patchSize = 0;
 
     if (mutation.hasDeletions()) {
       for (StaticBuffer b : mutation.getDeletions()) {
         patch.remove("/" + encodeKey(b));
         if (++patchSize == getPatchSize()) {
-          batch.patchItemOperation(key, patch, new CosmosBatchPatchItemRequestOptions());
+          result.add(patch);
           patch = CosmosPatchOperations.create();
           patchSize = 0;
-          if (++batchSize == getBatchSize()) {
-            result.add(batch);
-            batch = CosmosBatch.createCosmosBatch(partitionKey);
-            batchSize = 0;
-          }
         }
       }
     }
@@ -293,25 +257,17 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
       for (Entry e : mutation.getAdditions()) {
         patch.add("/" + encodeKey(e.getColumn()), encodeValue(e.getValue()));
         if (++patchSize == getPatchSize()) {
-          batch.patchItemOperation(key, patch, new CosmosBatchPatchItemRequestOptions());
+          result.add(patch);
           patch = CosmosPatchOperations.create();
           patchSize = 0;
-          if (++batchSize == getBatchSize()) {
-            result.add(batch);
-            batch = CosmosBatch.createCosmosBatch(partitionKey);
-            batchSize = 0;
-          }
         }
       }
     }
 
     if (patchSize > 0) {
-      batch.patchItemOperation(key, patch, new CosmosBatchPatchItemRequestOptions());
-      ++batchSize;
+      result.add(patch);
     }
-    if (batchSize > 0) {
-      result.add(batch);
-    }
+
     return result;
   }
 }

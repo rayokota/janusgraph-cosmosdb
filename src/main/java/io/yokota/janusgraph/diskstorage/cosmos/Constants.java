@@ -36,9 +36,9 @@ public final class Constants {
   public static final String JANUSGRAPH_VALUE = "v";
 
   // The maximum size of a batch, per the Cosmos DB docs
-  public static final int DEFAULT_BATCH_SIZE_LIMIT = 2;
+  public static final int DEFAULT_BATCH_SIZE_LIMIT = 100;
   // The maximum size of a patch, per the Cosmos DB docs
-  public static final int DEFAULT_PATCH_SIZE_LIMIT = 5;
+  public static final int DEFAULT_PATCH_SIZE_LIMIT = 10;
 
   // Copied from com.azure.cosmos.DirectConnnectionConfig
   private static final Boolean DEFAULT_CONNECTION_ENDPOINT_REDISCOVERY_ENABLED = true;
