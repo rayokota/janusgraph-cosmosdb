@@ -207,8 +207,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         .parallel()
         .runOn(Schedulers.boundedElastic())
         .flatMap(entry -> executeCreateAndBatch(entry.getKey(), entry.getValue()))
-        .map(responses -> {
-          for (CosmosBatchResponse response : responses) {
+        .map(response -> {
             // Examining if the batch of operations is successful
             if (response.isSuccessStatusCode()) {
               log.trace("The batch of operations succeeded.");
@@ -227,14 +226,13 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
                 }
               });
             }
-          }
-          return responses.get(responses.size() - 1);
+          return response;
         })
         .sequential()
         .blockLast();
   }
 
-  protected Mono<List<CosmosBatchResponse>> executeCreateAndBatch(StaticBuffer key, KCVMutation mutation) {
+  protected Mono<CosmosBatchResponse> executeCreateAndBatch(StaticBuffer key, KCVMutation mutation) {
     ObjectNode item = new ItemBuilder()
         .partitionKey(key)
         .columnKey(key)
@@ -255,12 +253,16 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         .then(executeBatch(key, mutation));
   }
 
-  protected Mono<List<CosmosBatchResponse>> executeBatch(StaticBuffer key, KCVMutation mutation) {
+  protected Mono<CosmosBatchResponse> executeBatch(StaticBuffer key, KCVMutation mutation) {
     List<CosmosBatch> batches = convertToBatches(encodeKey(key), mutation);
     List<Mono<CosmosBatchResponse>> responses = batches.stream()
         .map(batch -> getContainer().executeCosmosBatch(batch, new CosmosBatchRequestOptions()))
         .collect(Collectors.toList());
-    return Flux.fromIterable(responses).flatMap(x -> x).collectList();
+    Mono<CosmosBatchResponse> first = responses.get(0);
+    for (int i = 1; i < responses.size(); i++) {
+      first = first.then(responses.get(i));
+    }
+    return first;
   }
 
   protected List<CosmosBatch> convertToBatches(String key, KCVMutation mutation) {
