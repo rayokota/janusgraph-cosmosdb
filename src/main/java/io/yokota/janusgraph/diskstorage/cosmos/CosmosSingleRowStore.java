@@ -207,7 +207,8 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         .partitionKey(key)
         .columnKey(key)
         .build();
-    PartitionKey partitionKey = new PartitionKey(encodeKey(key));
+    String itemId = encodeKey(key);
+    PartitionKey partitionKey = new PartitionKey(itemId);
 
     // Ensure the items already exist, as patch operations will not create the item
     // (a patch operation is not a "patch-sert" in the same manner as upsert).
@@ -217,7 +218,7 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
         .onErrorResume(exception -> {
           if (!(exception instanceof CosmosException)
               || ((CosmosException) exception).getStatusCode() != 409) {
-            log.warn("Could not create item:{}", encodeKey(key), exception);
+            log.warn("Could not create item:{}", itemId, exception);
           }
           return Mono.empty();
         });
@@ -229,15 +230,15 @@ public class CosmosSingleRowStore extends AbstractCosmosStore {
   }
 
   protected List<Mono<CosmosItemResponse<ObjectNode>>> executePatches(StaticBuffer key, KCVMutation mutation) {
-    PartitionKey partitionKey = new PartitionKey(encodeKey(key));
-    List<CosmosPatchOperations> patches = convertToPatches(encodeKey(key), mutation);
+    String itemId = encodeKey(key);
+    PartitionKey partitionKey = new PartitionKey(itemId);
+    List<CosmosPatchOperations> patches = convertToPatches(mutation);
     return patches.stream()
-        .map(patch -> getContainer().patchItem(encodeKey(key), partitionKey, patch, new CosmosPatchItemRequestOptions(), ObjectNode.class))
+        .map(patch -> getContainer().patchItem(itemId, partitionKey, patch, new CosmosPatchItemRequestOptions(), ObjectNode.class))
         .collect(Collectors.toList());
   }
 
-  protected List<CosmosPatchOperations> convertToPatches(String key, KCVMutation mutation) {
-    PartitionKey partitionKey = new PartitionKey(key);
+  protected List<CosmosPatchOperations> convertToPatches(KCVMutation mutation) {
     List<CosmosPatchOperations> result = new ArrayList<>();
     CosmosPatchOperations patch = CosmosPatchOperations.create();
     int patchSize = 0;
