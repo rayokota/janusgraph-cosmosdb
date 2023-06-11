@@ -1,15 +1,9 @@
 # Azure Cosmos DB Storage Adapter for JanusGraph
 
 [![Build Status][github-actions-shield]][github-actions-link]
-[![Maven][maven-shield]][maven-link]
-[![Javadoc][javadoc-shield]][javadoc-link]
 
 [github-actions-shield]: https://github.com/rayokota/janusgraph-cosmosdb/workflows/build/badge.svg?branch=master
 [github-actions-link]: https://github.com/rayokota/janusgraph-cosmosdb/actions
-[maven-shield]: https://img.shields.io/maven-central/v/io.yokota/janusgraph-cosmosdb.svg
-[maven-link]: https://search.maven.org/#search%7Cga%7C1%7Cio.yokota
-[javadoc-shield]: https://javadoc.io/badge/io.yokota/janusgraph-cosmosdb.svg?color=blue
-[javadoc-link]: https://javadoc.io/doc/io.yokota/janusgraph-cosmosdb
 
 [JanusGraph](http://janusgraph.org) is an [Apache TinkerPop](http://tinkerpop.apache.org) enabled graph database that supports a variety of storage and indexing backends. This project adds [Azure Cosmos DB](https://azure.microsoft.com/en-us/products/cosmos-db) to the supported list of backends.
 
