@@ -15,7 +15,7 @@
         <jdk.version>11</jdk.version>
         <cosmos.version>4.46.0</cosmos.version>
         <jackson.version>2.15.2</jackson.version>
-        <janusgraph.version>1.0.0-20230623-165247.e595d49</janusgraph.version>
+        <janusgraph.version>1.0.0-20230628-134634.2e54144</janusgraph.version>
         <lombok.version>1.18.28</lombok.version>
         <slf4j.version>2.0.7</slf4j.version>
         <dependency.plugin.version>3.6.0</dependency.plugin.version>
