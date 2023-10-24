@@ -18,7 +18,7 @@
         <janusgraph.version>1.0.0-20231007-065545.bef739e</janusgraph.version>
         <lombok.version>1.18.30</lombok.version>
         <slf4j.version>2.0.7</slf4j.version>
-        <dependency.plugin.version>3.6.0</dependency.plugin.version>
+        <dependency.plugin.version>3.6.1</dependency.plugin.version>
         <test.excluded.groups>MEMORY_TESTS,PERFORMANCE_TESTS,BRITTLE_TESTS,CELL_TTL_TESTS</test.excluded.groups>
         <test.skip.default>false</test.skip.default>
         <test.skip.tp>true</test.skip.tp>
